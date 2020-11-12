@@ -1,0 +1,6 @@
+Activate environment
+source env/bin/activate
+
+Run app
+export set FLASK_APP=strava_app.webapp
+python3 -m flask run
