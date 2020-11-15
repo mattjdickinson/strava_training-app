@@ -5,7 +5,6 @@ Run app
 export set FLASK_APP=strava_app.webapp
 python3 -m flask run
 
-
  cd /Users/matt/Python/strava-training 
 
  check PATH
@@ -14,6 +13,7 @@ python3 -m flask run
  sudo nano /etc/paths
  enter pathsctrl x, y , enter
 
+https://www.youtube.com/watch?v=5iWhQWVXosU
  environment variables:
  terminal, cd, nano .zshrc
  
