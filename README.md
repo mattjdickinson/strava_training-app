@@ -12,6 +12,8 @@ By default just do past year (or even past week) so that it runs quickly initial
 
 TODO
 Get import module working for get_data.py. Environ issue?
+Get all data wanted into dataframe
+Laps is always populated with at least one lap, so no need to work with splis
 Refactor get_data to loop through all pages for activities and append to json object / df
 Get basic table working for one activities
 Extend table for all activities - loop alreayd in place for json, but will need to amend if use df

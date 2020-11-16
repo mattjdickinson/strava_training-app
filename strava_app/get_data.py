@@ -7,9 +7,8 @@ import pandas as pd
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-def get_dataset():
+def get_access_token():
     auth_url = "https://www.strava.com/oauth/token"
-    activities_url = "https://www.strava.com/api/v3/athlete/activities"
 
     payload = {
         'client_id': os.environ.get('CLIENT_ID'),
@@ -23,106 +22,125 @@ def get_dataset():
     # Refresh_token doens't change. See 'activity_readall.txt' for steps
     print("Requesting Token...\n")
     res = requests.post(auth_url, data=payload, verify=False)
-    # print(res.json())
     access_token = res.json()['access_token']
     print("Access Token = {}\n".format(access_token))
-
-    header = {'Authorization': 'Bearer ' + access_token}
-    param = {'per_page': 200, 'page': 1}
-    data = requests.get(activities_url, headers=header, params=param).json()
-
-    # http://www.hainke.ca/index.php/2018/08/23/using-the-strava-api-to-retrieve-activity-data/
-
-    # print(type(my_dataset)) # List of dicts (name, value pairs)
-    # print(json.dumps(data, indent=2))
-
-    # Get encoded polyline for use in google maps platform polyline
-    # https://developers.google.com/maps/documentation/utilities/polylineutility
-
-    # run_id = 4323804440
-    # r = requests.get(activities_url + '/' + str(run_id) + '?' + 'access_token="' + access_token + '"')
-    # r = r.json()
-    # print(r)
+    return access_token
 
 
-    return data
+def get_activity_ids(access_token):
+    activities_url = "https://www.strava.com/api/v3/athlete/activities"
 
-def get_data_splits():
-    # Initialize the dataframe
-    col_names = ['id','type']
+    # Set up a data frame for each activity
+    col_names = ['id','type','date']
     activities = pd.DataFrame(columns=col_names)
 
-    access_token = "access_token=a611269bc4a17143e5fc9e4a7648180f16102c5d" # replace with your access token here
-    url = "https://www.strava.com/api/v3/activities"
-
+    per_page = 3
     page = 1
 
+    # Limit to 1 page while testing
+    while page == 1:
+    
+    # code to take all activities
     # while True:
         
-    # get page of activities from Strava
-    r = requests.get(url + '?' + access_token + '&per_page=6' + '&page=' + str(page))
-    r = r.json()
+        # Get activities by page
+        header = {'Authorization': 'Bearer ' + access_token}
+        param = {'per_page': per_page, 'page': page}
+        data = requests.get(activities_url, headers=header, params=param).json()
 
-    # # if no results then exit loop
-    # if (not r):
-    #     break
-    
-    # otherwise add new data to dataframe
-    for x in range(len(r)):
-        activities.loc[x + (page-1)*50,'id'] = r[x]['id']
-        activities.loc[x + (page-1)*50,'type'] = r[x]['type']
+        # Print out json for visibility
+        # with open('static/all_activities.json', 'w') as f:
+        #     json.dump(data, f, indent=2)
 
-        # # increment page
-        # page += 1
+        # Exit loop if no results 
+        if (not data):
+            break
+        
+        # Otherwise add new data to dataframe
+        for i in range(len(data)):
+            activities.loc[i + (page-1)*per_page,'id'] = data[i]['id']
+            activities.loc[i + (page-1)*per_page,'type'] = data[i]['type']
+            activities.loc[i + (page-1)*per_page,'date'] = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
 
-        # filter to only runs
+        page += 1
+
+    return activities
+
+
+def get_activity_data(access_token, activities):
+    basic_url = "https://www.strava.com/api/v3/activities"
+
+    # initialise data frame for all activity data excluding laps 
+    col_names = ['id', 'start_date', 'name', 'distance', 'moving_time' 'workout_type', 'average_speed', 'average_heartrate', 'average_cadence', 'description', 'suffer_score', 'perceived_exertion']
+    activity_data = pd.DataFrame(columns=col_names)
+
+    # filter to only runs
     runs = activities[activities.type == 'Run']
 
-    # initialize dataframe for split data
-    col_names = ['average_speed','distance','elapsed_time','elevation_difference','moving_time','pace_zone', 'split','id','date']
-    splits = pd.DataFrame(columns=col_names)
+    for i in range(len(runs)):
+        run_id = runs['id'][i]
+
+        # Load activity data
+        data = requests.get(basic_url + '/' + str(run_id) + '?access_token='+ access_token)
+        data = data.json()
+
+        # Just used once to look in data
+        with open('static/detailed_activity.json', 'w') as f:
+            json.dump(data, f, indent=2)
+
+        activity_data.loc[i, 'id'] = data['id']
+        activity_data.loc[i, 'start_date'] = datetime.strptime(data['start_date'][:10], '%Y-%m-%d').date()
+        activity_data.loc[i, 'name'] = data['name']
+        activity_data.loc[i, 'distance'] = data['distance']
+        activity_data.loc[i, 'moving_time'] = data['moving_time']
+        activity_data.loc[i, 'workout_type'] = data['workout_type']
+        activity_data.loc[i, 'average_speed'] = data['average_speed']
+        activity_data.loc[i, 'average_heartrate'] = data['average_heartrate']
+        activity_data.loc[i, 'average_cadence'] = data['average_cadence']
+        activity_data.loc[i, 'description'] = data['description']
+        activity_data.loc[i, 'suffer_score'] = data['suffer_score']
+        activity_data.loc[i, 'perceived_exertion'] = data['perceived_exertion']
+        activity_data.loc[i, 'moving_time'] = data['moving_time']
+
+        # i =+ 1
+
+    return activity_data
+
+def get_activity_laps(access_token, activities):
+
+    basic_url = "https://www.strava.com/api/v3/activities"
+
+    # initialize dataframe for laps data
+    col_names = ['id','date']
+    laps = pd.DataFrame(columns=col_names)
+
+    # filter to only runs
+    runs = activities[activities.type == 'Run']
 
     # loop through each activity id and retrieve data
     for run_id in runs['id']:
-        
-        # Load activity data
-        print(run_id)
-        print(url + '/' + str(run_id) + '?' + access_token)
-        r = requests.get(url + '/' + str(run_id) + '?' + access_token)
-        r = r.json()
-        print(json.dumps(r['description'], indent=2))
+        # print(run_id)
 
-        # Extract Activity Splits
-        activity_splits = pd.DataFrame(r['splits_metric']) 
-        activity_splits['id'] = run_id
-        activity_splits['date'] = r['start_date']
+        # Load activity data
+        data = requests.get(basic_url + '/' + str(run_id) + '?access_token='+ access_token)
+        data = data.json()
+
+        # Just used once to look in data
+        with open('static/detailed_activity.json', 'w') as f:
+            json.dump(data, f, indent=2)
+
+        # Extract Activity Laps
+        activity_laps = pd.DataFrame(data['laps']) 
+        activity_laps['id'] = run_id
+        activity_laps['date'] = data['start_date']
         
         # Add to total list of splits
-        splits = pd.concat([splits, activity_splits])
+        laps = pd.concat([laps, activity_laps])
 
-    return splits
+    return laps
 
-
-
-# Testing 
-# data = get_dataset()
-data = get_data_splits()
-# print(get_data_splits())
-# print(json.dumps(data[4], indent=2))
-# print(type(data[1]['start_date']))
-
-# print(data[4]['name'])
-# print(data[1]['start_date'])
-# print(datetime.strptime(data[1]['start_date'][:10], '%Y-%m-%d'))
-# str_to_dt = datetime.strptime(data[1]['start_date'], '%Y-%m-%dT%H:%M:%SZ')
-# date = str_to_dt.date()
-# time = str_to_dt.time()
-# print(date)
-# print(time)
-
-
-# for activity in data:
-#     print(activity['name'], activity['description'])
-
-# print(data[1]['map']['summary_polyline'])
-
+access_token = get_access_token()
+activity_ids = get_activity_ids(access_token)
+activity_data = get_activity_data(access_token, activity_ids)
+activity_laps = get_activity_laps(access_token, activity_ids)
+print(activity_data)
