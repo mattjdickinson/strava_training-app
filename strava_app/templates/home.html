@@ -5,11 +5,14 @@ Home
 {% block content %}
 <p>Home page for the Visual Studio Code Flask tutorial.</p>
 
+{{ data }}
+
+<!-- 
 {% for activity in data %}
     <tr>
-        <td>{{ activity['name'] }}</td>
+        <td>{{ activity['id'] }}</td>
     </tr>
     
-{% endfor %}
+{% endfor %} -->
 
 {% endblock %}

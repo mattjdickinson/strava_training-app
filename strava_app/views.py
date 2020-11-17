@@ -5,42 +5,19 @@ import requests
 import urllib3
 import json
 import os
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-# from get_data import get_dataset
-
-def get_dataset():
-    auth_url = "https://www.strava.com/oauth/token"
-    activities_url = "https://www.strava.com/api/v3/athlete/activities"
-
-    payload = {
-        'client_id': os.environ.get('CLIENT_ID'),
-        'client_secret': os.environ.get('CLIENT_SECRET'),
-        'refresh_token': os.environ.get('REFRESH_TOKEN'),
-        'grant_type': "refresh_token",
-        'f': 'json'
-    }
-
-    # Refresh token obtained through authorisation code from read_all activities (different to strava default of 'read'). Refresh_token doens't change. See 'activity_readall.txt' for steps
-    print("Requesting Token...\n")
-    res = requests.post(auth_url, data=payload, verify=False)
-    # print(res.json())
-    access_token = res.json()['access_token']
-    print("Access Token = {}\n".format(access_token))
-
-    header = {'Authorization': 'Bearer ' + access_token}
-    param = {'per_page': 200, 'page': 1}
-    # imports as list
-    data = requests.get(activities_url, headers=header, params=param).json()
-
-    return data
+from .get_data import get_access_token, get_activity_ids, get_activity_data, get_activity_laps
 
 
 @app.route("/")
 def home():
-    data = get_dataset()
-    return render_template("home.html", data = data)
+    # data = get_dataset()
+
+    access_token = get_access_token()
+    activity_ids = get_activity_ids(access_token)
+    activity_data = get_activity_data(access_token, activity_ids)
+    activity_laps = get_activity_laps(access_token, activity_ids)
+
+    return render_template("home.html", data = activity_data)
 
 @app.route("/about/")
 def about():
@@ -48,9 +25,9 @@ def about():
 
 @app.route("/api/")
 def api():
-    my_dataset = get_dataset()
+    # my_dataset = get_dataset()
 
-    return render_template("api.html", data=my_dataset)
+    return render_template("api.html")
 
 # @app.route("/api/data")
 # def get_data():

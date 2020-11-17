@@ -5,7 +5,9 @@ import os
 from datetime import datetime
 import pandas as pd
 
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 def get_access_token():
     auth_url = "https://www.strava.com/oauth/token"
@@ -24,6 +26,7 @@ def get_access_token():
     res = requests.post(auth_url, data=payload, verify=False)
     access_token = res.json()['access_token']
     print("Access Token = {}\n".format(access_token))
+
     return access_token
 
 
@@ -85,8 +88,8 @@ def get_activity_data(access_token, activities):
         data = data.json()
 
         # Just used once to look in data
-        with open('static/detailed_activity.json', 'w') as f:
-            json.dump(data, f, indent=2)
+        # with open('static/detailed_activity.json', 'w') as f:
+        #     json.dump(data, f, indent=2)
 
         activity_data.loc[i, 'id'] = data['id']
         activity_data.loc[i, 'start_date'] = datetime.strptime(data['start_date'][:10], '%Y-%m-%d').date()
@@ -102,9 +105,8 @@ def get_activity_data(access_token, activities):
         activity_data.loc[i, 'perceived_exertion'] = data['perceived_exertion']
         activity_data.loc[i, 'moving_time'] = data['moving_time']
 
-        # i =+ 1
-
     return activity_data
+
 
 def get_activity_laps(access_token, activities):
 
@@ -126,8 +128,8 @@ def get_activity_laps(access_token, activities):
         data = data.json()
 
         # Just used once to look in data
-        with open('static/detailed_activity.json', 'w') as f:
-            json.dump(data, f, indent=2)
+        # with open('static/detailed_activity.json', 'w') as f:
+        #     json.dump(data, f, indent=2)
 
         # Extract Activity Laps
         activity_laps = pd.DataFrame(data['laps']) 
@@ -139,8 +141,9 @@ def get_activity_laps(access_token, activities):
 
     return laps
 
-access_token = get_access_token()
-activity_ids = get_activity_ids(access_token)
-activity_data = get_activity_data(access_token, activity_ids)
-activity_laps = get_activity_laps(access_token, activity_ids)
-print(activity_data)
+# Testing
+# access_token = get_access_token()
+# activity_ids = get_activity_ids(access_token)
+# activity_data = get_activity_data(access_token, activity_ids)
+# activity_laps = get_activity_laps(access_token, activity_ids)
+# print(activity_data)
