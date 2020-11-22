@@ -37,7 +37,7 @@ def get_activity_ids(access_token):
     col_names = ['id','type','date']
     activities = pd.DataFrame(columns=col_names)
 
-    per_page = 3
+    per_page = 10
     page = 1
 
     # Limit to 1 page while testing
@@ -74,7 +74,20 @@ def get_activity_data(access_token, activities):
     basic_url = "https://www.strava.com/api/v3/activities"
 
     # initialise data frame for all activity data excluding laps 
-    col_names = ['id', 'start_date', 'name', 'distance', 'moving_time', 'workout_type', 'average_speed', 'average_heartrate', 'average_cadence','perceived_exertion', 'description', 'Map']
+    col_names = ['id', 
+                'date',
+                'time', 
+                'name', 
+                'distance', 
+                'moving_time', 
+                'workout_type', 
+                'average_speed', 
+                'average_heartrate', 
+                'average_cadence',
+                'perceived_exertion', 
+                'description', 
+                'Map']
+
     activity_data = pd.DataFrame(columns=col_names)
 
     # filter to only runs
@@ -92,7 +105,8 @@ def get_activity_data(access_token, activities):
         #     json.dump(data, f, indent=2)
 
         activity_data.loc[i, 'id'] = data['id']
-        activity_data.loc[i, 'start_date'] = datetime.strptime(data['start_date'][:10], '%Y-%m-%d').date()
+        activity_data.loc[i, 'date'] = datetime.strptime(data['start_date'][:10], '%Y-%m-%d').date()
+        activity_data.loc[i, 'time'] = datetime.strptime(data['start_date'], '%Y-%m-%dT%H:%M:%SZ').time()
         activity_data.loc[i, 'name'] = data['name']
         activity_data.loc[i, 'distance'] = data['distance']
         activity_data.loc[i, 'moving_time'] = data['moving_time']

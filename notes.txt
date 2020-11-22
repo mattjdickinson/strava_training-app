@@ -17,3 +17,5 @@ https://www.youtube.com/watch?v=5iWhQWVXosU
  environment variables:
  terminal, cd, nano .zshrc
  
+Refresh css in chromne
+cmd + shift + r
