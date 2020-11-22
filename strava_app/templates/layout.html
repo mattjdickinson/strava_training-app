@@ -3,6 +3,7 @@
     <head>
         <meta charset="utf-8" />
         <title>{% block title %}{% endblock %}</title>
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='site.css')}}" />
     </head>
 
@@ -18,7 +19,7 @@
             {% endblock %}
             <hr/>
             <footer>
-                <p>© 2018</p>
+                <p>Matt Dickinson - Powered by Strava</p>
             </footer>
         </div>
     </body>

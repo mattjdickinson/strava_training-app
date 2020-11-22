@@ -29,5 +29,6 @@ Add in week start (Mon / Sun)
 Add in user description to activity - no as we won't be storing user data
 Use past data to predict future performance? Could do something simple based on past race performance, and Jack Daniels formula
 Link to show map of activity (individual GET request, polyline graph)
+Map heatspot based on speed
 
 

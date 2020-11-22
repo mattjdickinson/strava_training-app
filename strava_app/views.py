@@ -14,10 +14,11 @@ def home():
 
     access_token = get_access_token()
     activity_ids = get_activity_ids(access_token)
-    activity_data = get_activity_data(access_token, activity_ids)
-    activity_laps = get_activity_laps(access_token, activity_ids)
-
-    return render_template("home.html", data = activity_data)
+    df = get_activity_data(access_token, activity_ids)
+    # activity_laps = get_activity_laps(access_token, activity_ids)
+    
+    # link_column is the column that adds a button. Want this to be 'Show map'
+    return render_template("home.html", column_names=df.columns.values, row_data=list(df.values.tolist()), link_column="Map", zip=zip)
 
 @app.route("/about/")
 def about():

@@ -74,7 +74,7 @@ def get_activity_data(access_token, activities):
     basic_url = "https://www.strava.com/api/v3/activities"
 
     # initialise data frame for all activity data excluding laps 
-    col_names = ['id', 'start_date', 'name', 'distance', 'moving_time' 'workout_type', 'average_speed', 'average_heartrate', 'average_cadence', 'description', 'suffer_score', 'perceived_exertion']
+    col_names = ['id', 'start_date', 'name', 'distance', 'moving_time', 'workout_type', 'average_speed', 'average_heartrate', 'average_cadence','perceived_exertion', 'description', 'Map']
     activity_data = pd.DataFrame(columns=col_names)
 
     # filter to only runs
@@ -101,9 +101,9 @@ def get_activity_data(access_token, activities):
         activity_data.loc[i, 'average_heartrate'] = data['average_heartrate']
         activity_data.loc[i, 'average_cadence'] = data['average_cadence']
         activity_data.loc[i, 'description'] = data['description']
-        activity_data.loc[i, 'suffer_score'] = data['suffer_score']
+        # activity_data.loc[i, 'suffer_score'] = data['suffer_score']
         activity_data.loc[i, 'perceived_exertion'] = data['perceived_exertion']
-        activity_data.loc[i, 'moving_time'] = data['moving_time']
+        activity_data.loc[i, 'Map'] = 'Show Map'
 
     return activity_data
 

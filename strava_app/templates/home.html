@@ -5,14 +5,44 @@ Home
 {% block content %}
 <p>Home page for the Visual Studio Code Flask tutorial.</p>
 
-{{ data }}
+<!-- {{ data }} -->
 
-<!-- 
-{% for activity in data %}
+
+<!-- {% for activity in data %}
     <tr>
         <td>{{ activity['id'] }}</td>
     </tr>
     
 {% endfor %} -->
+
+<table class="table table-hover .table-responsive .table-sm">
+    <tr>
+        {% for col in column_names %}
+        <th>{{col}}</th>
+        {% endfor %}
+    </tr>
+    {% for row in row_data %}
+    <!-- embedd if for color responsive -->
+    <!-- and use if to hide columns -->
+    <tr class="table-info">
+        {% for col, row_ in zip(column_names, row) %}
+        {% if col == link_column %}
+        <td>
+            <button type="submit" value={{ row_ }} name="id form="patient_form" class="patient_button">
+                {{ row_ }}
+            </button>
+        </td>
+        {% else %}
+        <td>{{row_}}</td>
+        {% endif %}
+        {% endfor %}
+    </tr>
+    {% endfor %}
+
+</table>
+
+
+
+
 
 {% endblock %}
