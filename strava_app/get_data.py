@@ -1,9 +1,13 @@
 import requests
+import requests_cache
 import urllib3
 import json
 import os
 from datetime import datetime
 import pandas as pd
+import logging
+import aiohttp
+import asyncio
 
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -60,6 +64,7 @@ def get_activity_ids(access_token):
             break
         
         # Otherwise add new data to dataframe
+        print(len(data))
         for i in range(len(data)):
             activities.loc[i + (page-1)*per_page,'id'] = data[i]['id']
             activities.loc[i + (page-1)*per_page,'type'] = data[i]['type']
@@ -69,7 +74,7 @@ def get_activity_ids(access_token):
 
     return activities
 
-
+# This loops through every single activity doing one get request at a time. Very slow, but only way to get all data for activity
 def get_activity_data(access_token, activities):
     basic_url = "https://www.strava.com/api/v3/activities"
 
@@ -98,7 +103,12 @@ def get_activity_data(access_token, activities):
 
         # Load activity data
         data = requests.get(basic_url + '/' + str(run_id) + '?access_token='+ access_token)
+        
+        # Check if from cache - works
+        # print(data.from_cache)
+        print('Loading activity {} out of {}'.format(i,len(runs)))
         data = data.json()
+
 
         # Just used once to look in data
         # with open('static/detailed_activity.json', 'w') as f:
@@ -120,6 +130,71 @@ def get_activity_data(access_token, activities):
         activity_data.loc[i, 'Map'] = 'Show Map'
 
     return activity_data
+
+
+def get_activity_data_TEST(access_token, activities):
+    basic_url = "https://www.strava.com/api/v3/activities"
+
+    # initialise data frame for all activity data excluding laps 
+    col_names = ['id', 
+                'date',
+                'time', 
+                'name', 
+                'distance', 
+                'moving_time', 
+                'workout_type', 
+                'average_speed', 
+                'average_heartrate', 
+                'average_cadence',
+                'perceived_exertion', 
+                'description', 
+                'Map']
+
+    activity_data = pd.DataFrame(columns=col_names)
+
+    # filter to only runs
+    runs = activities[activities.type == 'Run']
+
+    logging.basicConfig(level=logging.DEBUG)
+    s = requests.Session()
+    s.verify = True
+    for i in range(len(runs)):
+        run_id = runs['id'][i]
+
+        # Load activity data
+        s.get(basic_url + '/' + str(run_id) + '?access_token='+ access_token)
+        
+        # Check if from cache - works
+        # print(data.from_cache)
+        print('Loading activity {} out of {}'.format(i+1,len(runs)))
+    data = s.get("http://httpbin.org/cookies")
+    data = data.json()
+    print(data)
+
+
+        # Just used once to look in data
+        # with open('static/detailed_activity.json', 'w') as f:
+        #     json.dump(data, f, indent=2)
+
+        # activity_data.loc[i, 'id'] = data['id']
+        # activity_data.loc[i, 'date'] = datetime.strptime(data['start_date'][:10], '%Y-%m-%d').date()
+        # activity_data.loc[i, 'time'] = datetime.strptime(data['start_date'], '%Y-%m-%dT%H:%M:%SZ').time()
+        # activity_data.loc[i, 'name'] = data['name']
+        # activity_data.loc[i, 'distance'] = data['distance']
+        # activity_data.loc[i, 'moving_time'] = data['moving_time']
+        # activity_data.loc[i, 'workout_type'] = data['workout_type']
+        # activity_data.loc[i, 'average_speed'] = data['average_speed']
+        # activity_data.loc[i, 'average_heartrate'] = data['average_heartrate']
+        # activity_data.loc[i, 'average_cadence'] = data['average_cadence']
+        # activity_data.loc[i, 'description'] = data['description']
+        # # activity_data.loc[i, 'suffer_score'] = data['suffer_score']
+        # activity_data.loc[i, 'perceived_exertion'] = data['perceived_exertion']
+        # activity_data.loc[i, 'Map'] = 'Show Map'
+
+    return activity_data
+
+
+
 
 
 def get_activity_laps(access_token, activities):
@@ -155,9 +230,88 @@ def get_activity_laps(access_token, activities):
 
     return laps
 
+def weekly_totals(activities):
+
+
+
+
+    return 0
+
+def monthly_totals():
+
+
+
+
+    return 0
+
+def yearly_totals():
+
+
+
+
+    return 0
+
+
+# Drawback here is that json() loads whole response into memory. However,  we should not be loading in much data  so OK for now?
+async def get(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.json()
+            # return response
+
+
+def get_activity_data_TEST2(access_token, activities):
+    basic_url = "https://www.strava.com/api/v3/activities"
+
+    # initialise data frame for all activity data excluding laps 
+    col_names = ['id', 
+                'date',
+                'time', 
+                'name', 
+                'distance', 
+                'moving_time', 
+                'workout_type', 
+                'average_speed', 
+                'average_heartrate', 
+                'average_cadence',
+                'perceived_exertion', 
+                'description', 
+                'Map']
+
+    # activity_data = pd.DataFrame(columns=col_names)
+
+    # filter to only runs
+    runs = activities[activities.type == 'Run']
+
+    # for i in range(len(runs)):
+    #     run_id = runs['id'][i]
+
+        # Load activity data
+        # data = requests.get(basic_url + '/' + str(run_id) + '?access_token='+ access_token)
+        
+        # # Check if from cache - works
+        # # print(data.from_cache)
+        # print('Loading activity {} out of {}'.format(i,len(runs)))
+        # data = data.json()
+
+    print(len(runs))
+    loop = asyncio.get_event_loop()
+    coroutines = [get(basic_url + '/' + str(runs['id'][i]) + '?access_token='+ access_token) for i in range(len(runs))]
+
+    # coroutines = [get("http://example.com") for _ in range(8)]
+
+    results = loop.run_until_complete(asyncio.gather(*coroutines))
+
+    # print(results[0])
+    print(json.dumps(results[0], indent=4))
+    return results[0]
+    # print("Results: %s" % results)
+
+
+
 # Testing
-# access_token = get_access_token()
-# activity_ids = get_activity_ids(access_token)
-# activity_data = get_activity_data(access_token, activity_ids)
+access_token = get_access_token()
+activity_ids = get_activity_ids(access_token)
+activity_data = get_activity_data_TEST2(access_token, activity_ids)
 # activity_laps = get_activity_laps(access_token, activity_ids)
 # print(activity_data)

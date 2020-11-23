@@ -2,11 +2,15 @@ from datetime import datetime
 from flask import Flask, render_template
 from . import app
 import requests
+import requests_cache
 import urllib3
 import json
 import os
 from .get_data import get_access_token, get_activity_ids, get_activity_data, get_activity_laps
 
+requests_cache.install_cache('strava_cache', backend='sqlite', expire_after=180)
+
+# when add in authorise code, then we want to pull api and cache, so will need new route
 
 @app.route("/")
 def home():
