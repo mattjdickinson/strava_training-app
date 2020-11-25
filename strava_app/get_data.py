@@ -8,10 +8,14 @@ import pandas as pd
 import logging
 import aiohttp
 import asyncio
-
+import time
+import math
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 requests_cache.install_cache('strava_cache', backend='sqlite', expire_after=180)
+
+def roundup(x):
+    return int(math.ceil(x / 100.0)) * 100
 
 def get_access_token():
     auth_url = "https://www.strava.com/oauth/token"
@@ -26,38 +30,30 @@ def get_access_token():
 
     # Refresh token obtained through authorisation code from read_all activities (different to strava default of 'read'). 
     # Refresh_token doens't change. See 'activity_readall.txt' for steps
-    print("Requesting Token...\n")
+    print('Requesting Token...')
     res = requests.post(auth_url, data=payload, verify=False)
     access_token = res.json()['access_token']
-    print("Access Token = {}\n".format(access_token))
-
+    print(f'Access Token = {access_token}')
     return access_token
 
 
 def get_athlete(access_token) -> None:
-    url = "https://www.strava.com/api/v3/athlete"
-    # https://www.strava.com/api/v3/athlete?access_token=
+    url = 'https://www.strava.com/api/v3/athlete'
     data = requests.get(url + '?' + 'access_token=' + access_token)
     data = data.json()
-    id = data['id']
-    return id
-
-# def get_athlete_stats(access_token):
-#     # url =  https://www.strava.com/api/v3/athletes/{id}/stats" "Authorization: Bearer [[token]]"
-#     url =  "https://www.strava.com/api/v3/athletes/{id}/stats"
-
-#     # Get activities by page
-#     data = requests.get(url + '?' + 'access_token=' + access_token + '&per_page=' +str(per_page) + '&page=' + str(page))
-#     # print(data.from_cache)
-#     data = data.json()
-
-#     print(data)
+    return data
 
 
+def get_athlete_stats(access_token, athlete_id):
+    url =  'https://www.strava.com/api/v3/athletes/'
+    data = requests.get(url + str(athlete_id)  + '/stats?' + 'access_token=' + access_token)
+    data = data.json()
+    # print(json.dumps(data, indent=2))
+    return data
 
 
 def get_activity_ids(access_token):
-    activities_url = "https://www.strava.com/api/v3/athlete/activities"
+    url = "https://www.strava.com/api/v3/athlete/activities"
 
     # Set up a data frame for each activity
     col_names = ['id','type','date']
@@ -77,7 +73,7 @@ def get_activity_ids(access_token):
     #     print(f'page {page}')
 
         # Get activities by page
-        data = requests.get(activities_url + '?' + 'access_token=' + access_token + '&per_page=' +str(per_page) + '&page=' + str(page))
+        data = requests.get(url + '?' + 'access_token=' + access_token + '&per_page=' +str(per_page) + '&page=' + str(page))
         # print(data.from_cache)
         data = data.json()
 
@@ -107,36 +103,56 @@ def get_activity_ids(access_token):
     return activities
 
 
-def get_activity_ids_ASYNC(access_token):
-    activities_url = "https://www.strava.com/api/v3/athlete/activities"
+def get_activity_ids_ASYNC(access_token, total):
+    start = time.time()
+    url = "https://www.strava.com/api/v3/athlete/activities"
 
     # Set up a data frame for each activity
     col_names = ['id','type','date']
     activities = pd.DataFrame(columns=col_names)
 
-    # if this is over 20 it doesn't work
+    # Number of activities to feature in each get request
     per_page = 100
 
-    # WIll need a way of finding limit or pages, I have 2686 activities
+    # Use combined totals of athletes runs, rides, and swims to base how many activities we  will draw from
+    # Then double it in case athlete has recorded additional activities like yoga, walking etc
+    # Revist this, I ran mine with 10,000 activites compared to my actual of 2,700 and time was same
+
+    # +1 needed as range will run up to but not including
+    # pages = math.ceil((total / per_page) * 2) + 1
+    pages = 10
+    print(f'Pages ={pages}')
+
+    # Will need a way of finding limit or pages, I have 2686 activities
     # Strava should have a totals - yes 'ActivityStats
     loop = asyncio.get_event_loop()
-    coroutines = [get(activities_url + '?' + 'access_token=' + access_token + '&per_page=' +str(per_page) + '&page=' + str(page)) for page in range(1, 3)]
+    coroutines = [get(url + '?' + 'access_token=' + access_token + '&per_page=' +str(per_page) + '&page=' + str(page)) for page in range(1, pages)]
 
-        # page += 1
+    data = loop.run_until_complete(asyncio.gather(*coroutines))
+    # Results is a  list and each entry has a json with 100 activities
+    print(f'Results length= {len(data)}')
 
-    results = loop.run_until_complete(asyncio.gather(*coroutines))
-    print(len(results))
-    # data = results[0]
-    print("Finished")
-    # print(results[0])
-    # return activities
-
+    # Set up a data frame for each activity
+    col_names = ['id','type','date']
+    activities = pd.DataFrame(columns=col_names)
 
 
 
+# update below with try except to stop when no data / out of index range
 
+    k = 0
+    for i in range(pages-1): #0 to 1
+        for j in range(per_page): #0 to 2
+            activities.loc[k,'id'] = data[i][j]['id']
+            activities.loc[k,'type'] = data[i][j]['type']
+            activities.loc[k,'date'] = datetime.strptime(data[i][j]['start_date'][:10], '%Y-%m-%d').date()
+            k += 1
 
-
+    print(activities)
+    end = time.time()
+    diff = end-start
+    print(f'Per_page= {per_page}, Time={diff}')
+    return activities
 
 
 # This loops through every single activity doing one get request at a time. Very slow, but only way to get all data for activity
@@ -315,9 +331,13 @@ def get_activity_data_TEST(access_token, activities) -> None:
 
 # Testing
 access_token = get_access_token()
-athlete_id = get_athlete(access_token)
+athlete_id = get_athlete(access_token)['id']
 print(athlete_id)
-# activity_ids = get_activity_ids_ASYNC(access_token)
+athlete_stats = get_athlete_stats(access_token, athlete_id)
+total_activities  = total_activities = athlete_stats['all_ride_totals']['count'] + athlete_stats['all_run_totals']['count'] + athlete_stats['all_swim_totals']['count']
+print(total_activities)
+activity_ids = get_activity_ids_ASYNC(access_token, total_activities)
+
 
 # activity_ids = get_activity_ids(access_token)
 # activity_data = get_activity_data_TEST(access_token, activity_ids)
