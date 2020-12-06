@@ -11,10 +11,6 @@ Allow user to specify date range
 By default just do past year (or even past week) so that it runs quickly initially. This means we can keep initial GETs to one or two pages
 
 TODO
-Get import module working for get_data.py. Environ issue?
-Get all data wanted into dataframe
-Laps is always populated with at least one lap, so no need to work with splis
-Refactor get_data to loop through all pages for activities and append to json object / df
 Get basic table working for one activities
 Extend table for all activities - loop alreayd in place for json, but will need to amend if use df
 Add in week/month/year subtotals - split by activity type (run, ride) and don't show if not present i.e. if toggles
@@ -30,5 +26,6 @@ Add in user description to activity - no as we won't be storing user data
 Use past data to predict future performance? Could do something simple based on past race performance, and Jack Daniels formula
 Link to show map of activity (individual GET request, polyline graph)
 Map heatspot based on speed
+DATE range specified in web browser to print from. default could be one year. Would need to amend functions
 
 
