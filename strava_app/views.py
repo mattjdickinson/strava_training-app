@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 from flask import Flask, render_template
 from . import app
 import requests
@@ -6,15 +6,25 @@ import requests_cache
 import urllib3
 import json
 import os
-from .get_data import get_access_token, get_athlete, get_athlete_stats, get_activity_ids, get_activity_data, get
+from .get_data import get_access_token, get_athlete, get_athlete_stats, get_activity_ids, get_activity_data, get, am_or_pm
 import asyncio
 
 requests_cache.install_cache('strava_cache', backend='sqlite', expire_after=180)
 
 # when add in authorise code, then we want to pull api and cache, so will need new route
 
+# def am_or_pm(i):
+#     # txt = i.split(':')
+#     # tm = time(txt[0], txt[1], txt[2])
+#     if i < time(12,00,00,00):
+#         x = 'am'
+#     else:
+#         x = 'pm'
+#     return x
+
 @app.route("/")
 def home():
+
     use_stored_data = True
 
     start_date =  datetime(2020, 1, 1).date()
@@ -25,15 +35,17 @@ def home():
     athlete_stats = get_athlete_stats(access_token, athlete_id, use_stored_data)
     total_activities  = total_activities = athlete_stats['all_ride_totals']['count'] + athlete_stats['all_run_totals']['count'] + athlete_stats['all_swim_totals']['count']
     activity_ids = get_activity_ids(access_token, total_activities, use_stored_data)
+    # print(activity_ids)
     activity_data, activity_laps = get_activity_data(access_token, activity_ids, start_date, end_date, use_stored_data)
+    # print(activity_data['id'])
 
     column_names = ['Date', 
-                    'Time', 
+                    'Time of day', 
                     'Name', 
                     'Distance (miles)', 
                     'Run Time', 
                     'Type', 
-                    'Average Pace', 
+                    'Average Pace (/mi)', 
                     'Laps (Number, Distance, Time, Average Pace)',
                     'Average Heart Rate', 
                     'Average Cadence',

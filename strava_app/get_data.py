@@ -3,12 +3,12 @@ import requests_cache
 import urllib3
 import json
 import os
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, time
 import pandas as pd
 import logging
 import aiohttp
 import asyncio
-import time
+# import time
 import math
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -29,7 +29,7 @@ def roundup(x):
 def mps_to_mpm(speed):
     global MPS_TO_MPM
     m, s = divmod(MPS_TO_MPM  / speed*60, 60)
-    pace = f'{int(m):02d}:{int(s)+1:02d}'
+    pace = f'{int(m):2d}:{int(s)+1:02d}'
     return pace
 
 def workout_type(i):
@@ -38,6 +38,15 @@ def workout_type(i):
             2: "Long Run",
             3: "Workout"}
     return type[i]
+
+def am_or_pm(i):
+    # txt = i.split(':')
+    # tm = time(txt[0], txt[1], txt[2])
+    if i < time(12,00,00,00):
+        x = 'am'
+    else:
+        x = 'pm'
+    return x
 
 # Drawback here is that json() loads whole response into memory. However, we should not be loading in much data so OK for now?
 # Store result in dataframe then free memory
@@ -89,14 +98,14 @@ def get_athlete_stats(access_token, athlete_id, use_stored_data):
 
 
 def get_activity_ids(access_token, total, use_stored_data):
-    start = time.time()
+    # start = time.time()
 
     # Set up a data frame for each activity
     col_names = ['id','type','date']
     activities = pd.DataFrame(columns=col_names)
 
     # Number of activities to feature in each get request. High limit to reduce number of API calls
-    per_page = 10
+    per_page = 30
 
     # Use combined totals of athletes runs, rides, and swims to base how many activities we  will draw from
     # Then double it in case athlete has recorded additional activities like yoga, walking etc
@@ -142,9 +151,8 @@ def get_activity_ids(access_token, total, use_stored_data):
             except: # no data to parse
                 break
 
-    # print(activities)
-    end = time.time()
-    print(f'Time={end-start}')
+    # end = time.time()
+    # print(f'Time={end-start}')
     return activities
 
 
@@ -152,7 +160,7 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
     global M_TO_MILES
     global MPS_TO_MPM    
     
-    start = time.time()
+    # start = time.time()
 
     # initialise data frame for all activity data excluding laps 
     col_names = ['id', 
@@ -177,7 +185,7 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
     laps = pd.DataFrame(columns=col_names)
 
     runs = activities[(activities.type == 'Run') & (activities.date >= start_date) & (activities.date <= end_date)]
-
+    print(len(runs))
     if use_stored_data:
         with open('strava_app/static/get_activity_data.json', 'r') as file:
             data = json.load(file)
@@ -193,11 +201,14 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
         with open('strava_app/static/get_activity_data.json', 'w') as file:
             json.dump(data, file, indent=4, sort_keys=True)
 
+    tm = datetime.strptime(data[1]['start_date'], '%Y-%m-%dT%H:%M:%SZ').time()
+    print(am_or_pm(tm))
+    
     for i in range(len(runs)):
         try:
             activity_data.loc[i, 'id'] = data[i]['id']
             activity_data.loc[i, 'date'] = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
-            activity_data.loc[i, 'time'] = datetime.strptime(data[i]['start_date'], '%Y-%m-%dT%H:%M:%SZ').time()
+            activity_data.loc[i, 'time'] = am_or_pm(datetime.strptime(data[i]['start_date'], '%Y-%m-%dT%H:%M:%SZ').time())
             activity_data.loc[i, 'name'] = data[i]['name']
             activity_data.loc[i, 'distance'] = '{:.2f}'.format(data[i]['distance'] * M_TO_MILES)
             activity_data.loc[i, 'moving_time'] = str(timedelta(seconds=data[i]['moving_time']))
@@ -211,7 +222,7 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
             activity_data['grp_idx'] = activity_data['date'].apply(lambda x: '%s-%s' % (x.year, 'W{:02d}'.format(x.isocalendar()[1])))
 
             # print(len(data[i]['laps']))
-            all_laps = ''
+            # all_laps = ''
             for j in range(len(data[i]['laps'])):
                 name = data[i]['laps'][j]['name']
                 distance = '{:.2f}'.format(data[i]['laps'][j]['distance']  * M_TO_MILES)
@@ -220,15 +231,15 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
 
 
                 if j == 0:
-                    all_laps = name + ',  ' + distance + 'mi, ' + moving_time + ', ' + pace + '/mi'
+                    all_laps = name + '   ' + distance + 'mi  ' + moving_time + '  ' + pace + '/mi'
                 elif j < 9:
-                    all_laps = all_laps + '\n' + name + ',  ' + distance + 'mi, ' + moving_time + ', ' + pace + '/mi'
+                    all_laps = all_laps + '\n' + name + '   ' + distance + 'mi  ' + moving_time + '  ' + pace + '/mi'
                 else:
-                    all_laps = all_laps + '\n' + name + ', ' + distance + 'mi, ' + moving_time + ', ' + pace + '/mi'
+                    all_laps = all_laps + '\n' + name + '  ' + distance + 'mi  ' + moving_time + '  ' + pace + '/mi'
 
             activity_data.loc[i, 'laps'] = all_laps
 
-
+            # activity_data.loc[i, 'laps'] = 'laps'
 
             # Extract Activity Laps
             activity_laps = pd.DataFrame(data[i]['laps']) 
@@ -238,8 +249,9 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
             # Add to total list of splits
             laps = pd.concat([laps, activity_laps])
 
-        except:
-            break
+        except Exception:
+            pass
+            # break
     
         
     
@@ -255,8 +267,8 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
     laps['distance'] = laps['distance'].map(lambda a: '{:.2f}'.format(a * M_TO_MILES))
     laps['average_speed'] = laps['average_speed'].map(lambda a: mps_to_mpm(a))
 
-    end = time.time()
-    print(f'Time={end-start}')
+    # end = time.time()
+    # print(f'Time={end-start}')
     return activity_data, laps
 
 
