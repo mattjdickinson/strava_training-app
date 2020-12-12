@@ -32,6 +32,12 @@ def mps_to_mpk(speed):
     pace = f'{int(m):02d}:{int(s)+1:02d}'
     return pace
 
+def workout_type(i):
+    type = {0 : 'None',
+            1: "Race",
+            2: "Long Run",
+            3: "Workout"}
+    return type[i]
 
 # Drawback here is that json() loads whole response into memory. However, we should not be loading in much data so OK for now?
 # Store result in dataframe then free memory
@@ -69,46 +75,61 @@ def get_athlete(access_token):
     return data
 
 
-def get_athlete_stats(access_token, athlete_id):
-    url =  'https://www.strava.com/api/v3/athletes/'
-    data = requests.get(url + str(athlete_id)  + '/stats?' + 'access_token=' + access_token)
-    data = data.json()
-    # print(json.dumps(data, indent=2))
+def get_athlete_stats(access_token, athlete_id, use_stored_data):
+    if use_stored_data:
+        with open('strava_app/static/get_athlete_stats.json', 'r') as file:
+            data = json.load(file)
+    else:
+        url =  'https://www.strava.com/api/v3/athletes/'
+        data = requests.get(url + str(athlete_id)  + '/stats?' + 'access_token=' + access_token)
+        data = data.json()
+        with open('strava_app/static/get_athlete_stats.json', 'w') as file:
+            json.dump(data, file, indent=4, sort_keys=True)
     return data
 
 
-def get_activity_ids_ASYNC(access_token, total):
+def get_activity_ids(access_token, total, use_stored_data):
     start = time.time()
-    url = "https://www.strava.com/api/v3/athlete/activities"
 
+    # Set up a data frame for each activity
     col_names = ['id','type','date']
     activities = pd.DataFrame(columns=col_names)
 
     # Number of activities to feature in each get request. High limit to reduce number of API calls
-    per_page = 5 #500
+    per_page = 10
 
     # Use combined totals of athletes runs, rides, and swims to base how many activities we  will draw from
     # Then double it in case athlete has recorded additional activities like yoga, walking etc
 
     # +1 needed as range will run up to but not including
     # pages = math.ceil((total / per_page) * 2) + 1
-    pages = 2
+    pages = 3
     print(f'Pages = {pages}')
 
-    # Will need a way of finding limit or pages, I have 2686 activities
-    # Strava should have a totals - yes 'ActivityStats
-    loop = asyncio.get_event_loop()
-    coroutines = [get(url + '?' + 'access_token=' 
-                    + access_token + '&per_page=' +str(per_page) 
-                    + '&page=' + str(page)) for page in range(1, pages)]
+    if use_stored_data:
+        with open('strava_app/static/get_activity_ids.json', 'r') as file:
+            data = json.load(file)
 
-    data = loop.run_until_complete(asyncio.gather(*coroutines))
-    # Results is a  list and each entry has a json with 100 activities
-    print(f'Results length= {len(data)}')
+    else:
+        url = "https://www.strava.com/api/v3/athlete/activities"
 
-    # Set up a data frame for each activity
-    col_names = ['id','type','date']
-    activities = pd.DataFrame(columns=col_names)
+        col_names = ['id','type','date']
+        activities = pd.DataFrame(columns=col_names)
+
+        asyncio.set_event_loop(asyncio.SelectorEventLoop()) # need this line so that runs in flask. Looks like bug with new event policy in Python 3.8
+        loop = asyncio.get_event_loop()
+        coroutines = [get(url + '?' + 'access_token=' 
+                        + access_token + '&per_page=' +str(per_page) 
+                        + '&page=' + str(page)) for page in range(1, pages)]
+
+        data = loop.run_until_complete(asyncio.gather(*coroutines))
+
+        # Save down in static file to read in when developing
+        with open('strava_app/static/get_activity_ids.json', 'w') as file:
+            json.dump(data, file, indent=4, sort_keys=True)
+
+        # Results is a  list and each entry has a json with 100 activities
+        print(f'Results length= {len(data)}')
 
     k = 0
     for i in range(pages-1):
@@ -127,12 +148,12 @@ def get_activity_ids_ASYNC(access_token, total):
     return activities
 
 
-def get_activity_data_ASYNC(access_token, activities):
-    start = time.time()
-    basic_url = "https://www.strava.com/api/v3/activities"
-
+def get_activity_data(access_token, activities, start_date, end_date, use_stored_data):
     global M_TO_MILES
-    global MPS_TO_MPM
+    global MPS_TO_MPM    
+    
+    start = time.time()
+
     # initialise data frame for all activity data excluding laps 
     col_names = ['id', 
                 'date',
@@ -155,41 +176,54 @@ def get_activity_data_ASYNC(access_token, activities):
     laps = pd.DataFrame(columns=col_names)
 
     # Need to limit to 100 per 15min..
-    start_date =  datetime(2020, 12, 1).date()
 
-    runs = activities[(activities.type == 'Run') & (activities.date >= start_date)]
-    print(runs)
-    loop = asyncio.get_event_loop()
-    coroutines = [get(basic_url + '/' + str(runs['id'][i]) + '?access_token='+ access_token) for i in range(len(runs))]
-    data = loop.run_until_complete(asyncio.gather(*coroutines))
 
-    # # print(json.dumps(data[0], indent=4))
+    runs = activities[(activities.type == 'Run') & (activities.date >= start_date) & (activities.date <= end_date)]
 
+    if use_stored_data:
+        with open('strava_app/static/get_activity_data.json', 'r') as file:
+            data = json.load(file)
+
+    else:
+        basic_url = "https://www.strava.com/api/v3/activities"
+        asyncio.set_event_loop(asyncio.SelectorEventLoop())
+        loop = asyncio.get_event_loop()
+        coroutines = [get(basic_url + '/' + str(runs['id'][i]) + '?access_token='+ access_token) for i in range(len(runs))]
+        data = loop.run_until_complete(asyncio.gather(*coroutines))
+
+        # Save down in static file to read in when developing
+        with open('strava_app/static/get_activity_data.json', 'w') as file:
+            json.dump(data, file, indent=4, sort_keys=True)
+
+    print(len(runs))
     for i in range(len(runs)):
-        activity_data.loc[i, 'id'] = data[i]['id']
-        activity_data.loc[i, 'date'] = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
-        activity_data.loc[i, 'time'] = datetime.strptime(data[i]['start_date'], '%Y-%m-%dT%H:%M:%SZ').time()
-        activity_data.loc[i, 'name'] = data[i]['name']
-        # activity_data.loc[i, 'distance'] = '{:.2f}'.format(data[i]['distance'] * M_TO_MILES)
-        activity_data.loc[i, 'distance'] = data[i]['distance'] * M_TO_MILES
-        activity_data.loc[i, 'moving_time'] = str(timedelta(seconds=data[i]['moving_time']))
-        activity_data.loc[i, 'workout_type'] = data[i]['workout_type']
-        activity_data.loc[i, 'average_speed'] = mps_to_mpk(data[i]['average_speed'])
-        activity_data.loc[i, 'average_heartrate'] = data[i]['average_heartrate']
-        activity_data.loc[i, 'average_cadence'] = data[i]['average_cadence']
-        activity_data.loc[i, 'description'] = data[i]['description']
-        activity_data.loc[i, 'perceived_exertion'] = data[i]['perceived_exertion']
-        activity_data.loc[i, 'Map'] = 'Show Map'
+        try:
+            activity_data.loc[i, 'id'] = data[i]['id']
+            activity_data.loc[i, 'date'] = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
+            activity_data.loc[i, 'time'] = datetime.strptime(data[i]['start_date'], '%Y-%m-%dT%H:%M:%SZ').time()
+            activity_data.loc[i, 'name'] = data[i]['name']
+            activity_data.loc[i, 'distance'] = '{:.2f}'.format(data[i]['distance'] * M_TO_MILES)
+            activity_data.loc[i, 'moving_time'] = str(timedelta(seconds=data[i]['moving_time']))
+            activity_data.loc[i, 'workout_type'] = workout_type(data[i]['workout_type'])
+            activity_data.loc[i, 'average_speed'] = mps_to_mpk(data[i]['average_speed'])
+            activity_data.loc[i, 'average_heartrate'] = data[i]['average_heartrate']
+            activity_data.loc[i, 'average_cadence'] = data[i]['average_cadence']
+            activity_data.loc[i, 'description'] = data[i]['description']
+            activity_data.loc[i, 'perceived_exertion'] = int(data[i]['perceived_exertion'])
+            activity_data.loc[i, 'Map'] = 'Show Map'
+            activity_data['grp_idx'] = activity_data['date'].apply(lambda x: '%s-%s' % (x.year, 'W{:02d}'.format(x.isocalendar()[1])))
 
-        # Extract Activity Laps
-        activity_laps = pd.DataFrame(data[i]['laps']) 
-        activity_laps['id'] = data[i]['id']
-        activity_laps['date'] = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
-        
-        # Add to total list of splits
-        laps = pd.concat([laps, activity_laps])
+            # Extract Activity Laps
+            activity_laps = pd.DataFrame(data[i]['laps']) 
+            activity_laps['id'] = data[i]['id']
+            activity_laps['date'] = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
+            
+            # Add to total list of splits
+            laps = pd.concat([laps, activity_laps])
+        except:
+            break
 
-    activity_data['grp_idx'] = activity_data['date'].apply(lambda x: '%s-%s' % (x.year, 'W{:02d}'.format(x.isocalendar()[1])))
+    
 
 
     # We don't need all of laps, so after this we can drop what we don't need
@@ -240,10 +274,10 @@ def td_format(td_object):
 
 
 def weekly_totals(df):
-    df['moving_time'] = pd.to_timedelta(activity_data['moving_time'])
+    df['moving_time'] = pd.to_timedelta(df['moving_time']) #was activity_data
 
-    dist = activity_data.groupby(['grp_idx'])['distance'].sum().reset_index(name='distance')
-    time = activity_data.groupby(['grp_idx'])['moving_time'].sum().reset_index(name='time')
+    dist = df.groupby(['grp_idx'])['distance'].sum().reset_index(name='distance')
+    time = df.groupby(['grp_idx'])['moving_time'].sum().reset_index(name='time')
     print(time)
     # time['time'] = time['time'].apply(lambda x: '{%H:%M:%S}'.format(x))
     time['time'] = time['time'].apply(lambda x: td_format(x))
@@ -275,20 +309,21 @@ def yearly_totals():
 
 
 # Testing
-access_token = get_access_token()
-athlete_id = get_athlete(access_token)['id']
-athlete_stats = get_athlete_stats(access_token, athlete_id)
-total_activities  = total_activities = athlete_stats['all_ride_totals']['count'] + athlete_stats['all_run_totals']['count'] + athlete_stats['all_swim_totals']['count']
-activity_ids = get_activity_ids_ASYNC(access_token, total_activities)
-activity_data, laps = get_activity_data_ASYNC(access_token, activity_ids)
-print(activity_data.head())
-print(laps)
+# use_stored_data = False
+# access_token = get_access_token()
+# athlete_id = get_athlete(access_token)['id']
+# athlete_stats = get_athlete_stats(access_token, athlete_id, True)
+# total_activities  = total_activities = athlete_stats['all_ride_totals']['count'] + athlete_stats['all_run_totals']['count'] + athlete_stats['all_swim_totals']['count']
+# activity_ids = get_activity_ids(access_token, total_activities, True)
+# activity_data, laps = get_activity_data(access_token, activity_ids, True)
+# print(activity_data.head())
+# print(laps)
 
 
 
 
-df = weekly_totals(activity_data)
-print(df)
+# df = weekly_totals(activity_data)
+# print(df)
 
 # df = pd.to_timedelta(activity_data['moving_time'])
 # print(df.sum())
@@ -300,13 +335,6 @@ print(df)
 
 
 
-
-# print(activity_data.groupby(['grp_idx'])['moving_time'].sum())
-
-# print(activity_data.groupby(['grp_idx'])['distance'].sum().index)
-# activity_data.groupby(['grp_idx'])['distance'].index = [from_year_week_to_date(x) for x in activity_data.groupby(['grp_idx'])['distance'].index ]
-# print(activity_data.groupby(['grp_idx'])['distance'].sum())
-# print(activity_data.groupby(['grp_idx'])['distance'].sum())
 
 # d = "2020-W49"
 # r = datetime.strptime(d + '-1', "%G-W%V-%u")

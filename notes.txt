@@ -2,8 +2,22 @@ Activate environment
 source env/bin/activate
 
 Run app
+This will run in production
 export set FLASK_APP=strava_app.webapp
 python3 -m flask run
+
+This will run in development
+$ export FLASK_APP=main.py
+$ export FLASK_ENV=development
+$ flask run
+
+Or one line:
+FLASK_APP=strava_app.webapp FLASK_ENV=development flask run
+
+change from default 5000 port
+FLASK_APP=strava_app.webapp FLASK_ENV=development flask run --port 8080
+
+
 
  cd /Users/matt/Python/strava-training 
 

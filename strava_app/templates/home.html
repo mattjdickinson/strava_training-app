@@ -3,41 +3,47 @@
 Home
 {% endblock %}
 {% block content %}
-<p>Home page for the Visual Studio Code Flask tutorial.</p>
+<p>Training log</p>
+
 
 <div class="table-container">
     <table class="table table-hover .table-responsive .table-sm w-auto small">
-    <!-- <table class="table .table-responsive">     -->
-        <tr>
+    <!-- <table> -->
+
+        <tr class = "header">
             {% for col in column_names %}
-            <th>{{col}}</th>
-
-
-            <!-- {% if col != "id" %}
-                <th>{{col}}</th>
-            {% else %}
-            {% endif %} -->
+            <th>{{ col }}</th>
             {% endfor %}
         </tr>
-        {% for row in row_data %}
-        <!-- embedd if for color responsive -->
-        <!-- and use if to hide columns -->
-        <tr class="table-info">
-            {% for col, row_ in zip(column_names, row) %}
-            {% if col == "ID" %}
-            <td style="visibility:collapse">{{row_}}</td>
-            {% elif col == link_column %}
-            <td>
-                <button type="submit" value={{ row_ }} name="id form="patient_form" class="patient_button">
-                <!-- <button type="submit" value="Test" "name="id form="patient_form" class="patient_button">    -->
-                    {{ row_ }}
-                </button>
-            </td>
-            {% else %}
-            <td>{{row_}}</td>
-            {% endif %}
-            {% endfor %}
+
+        {% for row in activity_data %}
+
+
+        {% if row['workout_type'] == "Workout" %}
+            <tr class="table-warning">
+        {% elif row['workout_type'] == "Long Run" %}        
+            <tr class="table-primary">
+        {% elif row['workout_type'] == "Race" %}        
+            <tr class="table-success">
+        {% else %}
+            <tr>
+        {% endif %}
+            
+            <td>{{ row['date'] }}</td>
+            <td>{{ row['time'] }}</td>
+            <td>{{ row['name'] }}</td>
+            <td>{{ row['distance'] }}</td>
+            <td>{{ row['moving_time'] }}</td>
+            <td>{{ row['workout_type'] }}</td>
+            <td>{{ row['average_speed'] }}</td>
+            <td>{{ "laps" }}</td>
+            <td>{{ row['average_heartrate'] }}</td>
+            <td>{{ row['average_cadence'] }}</td>
+            <td>{{ row['perceived_exertion'] }}</td>
+            <td>{{ row['description'] }}</td>
         </tr>
+
+
         {% endfor %}
 
     </table>
