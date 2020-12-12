@@ -48,7 +48,7 @@ def home():
                     'Average Pace (/mi)', 
                     'Laps (Number, Distance, Time, Average Pace)',
                     'Average Heart Rate', 
-                    'Average Cadence',
+                    'Average Cadence (spm)',
                     'Effort (1-10)', 
                     'Notes']
 

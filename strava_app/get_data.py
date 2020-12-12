@@ -210,12 +210,12 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
             activity_data.loc[i, 'date'] = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
             activity_data.loc[i, 'time'] = am_or_pm(datetime.strptime(data[i]['start_date'], '%Y-%m-%dT%H:%M:%SZ').time())
             activity_data.loc[i, 'name'] = data[i]['name']
-            activity_data.loc[i, 'distance'] = '{:.2f}'.format(data[i]['distance'] * M_TO_MILES)
+            activity_data.loc[i, 'distance'] = '{:.2f}'.format(data[i]['distance'] * M_TO_MILES) + ' mi'
             activity_data.loc[i, 'moving_time'] = str(timedelta(seconds=data[i]['moving_time']))
             activity_data.loc[i, 'workout_type'] = workout_type(data[i]['workout_type'])
-            activity_data.loc[i, 'average_speed'] = mps_to_mpm(data[i]['average_speed'])
+            activity_data.loc[i, 'average_speed'] = mps_to_mpm(data[i]['average_speed']) + ' /mi'
             activity_data.loc[i, 'average_heartrate'] = data[i]['average_heartrate']
-            activity_data.loc[i, 'average_cadence'] = data[i]['average_cadence']
+            activity_data.loc[i, 'average_cadence'] = data[i]['average_cadence'] * 2
             activity_data.loc[i, 'description'] = data[i]['description']
             activity_data.loc[i, 'perceived_exertion'] = int(data[i]['perceived_exertion'])
             activity_data.loc[i, 'Map'] = 'Show Map'
@@ -231,11 +231,11 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
 
 
                 if j == 0:
-                    all_laps = name + '   ' + distance + 'mi  ' + moving_time + '  ' + pace + '/mi'
+                    all_laps = name + '   ' + distance + ' mi  ' + moving_time + '  ' + pace + '/mi'
                 elif j < 9:
-                    all_laps = all_laps + '\n' + name + '   ' + distance + 'mi  ' + moving_time + '  ' + pace + '/mi'
+                    all_laps = all_laps + '\n' + name + '   ' + distance + ' mi  ' + moving_time + '  ' + pace + '/mi'
                 else:
-                    all_laps = all_laps + '\n' + name + '  ' + distance + 'mi  ' + moving_time + '  ' + pace + '/mi'
+                    all_laps = all_laps + '\n' + name + '  ' + distance + ' mi  ' + moving_time + '  ' + pace + '/mi'
 
             activity_data.loc[i, 'laps'] = all_laps
 
