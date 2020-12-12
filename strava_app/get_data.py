@@ -26,7 +26,7 @@ def roundup(x):
     return int(math.ceil(x / 100.0)) * 100
 
 
-def mps_to_mpk(speed):
+def mps_to_mpm(speed):
     global MPS_TO_MPM
     m, s = divmod(MPS_TO_MPM  / speed*60, 60)
     pace = f'{int(m):02d}:{int(s)+1:02d}'
@@ -167,6 +167,7 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
                 'average_cadence',
                 'perceived_exertion', 
                 'description', 
+                'laps'
                 'Map']
 
     activity_data = pd.DataFrame(columns=col_names)
@@ -174,9 +175,6 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
     # initialize dataframe for laps data
     col_names = ['id','date']
     laps = pd.DataFrame(columns=col_names)
-
-    # Need to limit to 100 per 15min..
-
 
     runs = activities[(activities.type == 'Run') & (activities.date >= start_date) & (activities.date <= end_date)]
 
@@ -195,7 +193,6 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
         with open('strava_app/static/get_activity_data.json', 'w') as file:
             json.dump(data, file, indent=4, sort_keys=True)
 
-    print(len(runs))
     for i in range(len(runs)):
         try:
             activity_data.loc[i, 'id'] = data[i]['id']
@@ -205,13 +202,33 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
             activity_data.loc[i, 'distance'] = '{:.2f}'.format(data[i]['distance'] * M_TO_MILES)
             activity_data.loc[i, 'moving_time'] = str(timedelta(seconds=data[i]['moving_time']))
             activity_data.loc[i, 'workout_type'] = workout_type(data[i]['workout_type'])
-            activity_data.loc[i, 'average_speed'] = mps_to_mpk(data[i]['average_speed'])
+            activity_data.loc[i, 'average_speed'] = mps_to_mpm(data[i]['average_speed'])
             activity_data.loc[i, 'average_heartrate'] = data[i]['average_heartrate']
             activity_data.loc[i, 'average_cadence'] = data[i]['average_cadence']
             activity_data.loc[i, 'description'] = data[i]['description']
             activity_data.loc[i, 'perceived_exertion'] = int(data[i]['perceived_exertion'])
             activity_data.loc[i, 'Map'] = 'Show Map'
             activity_data['grp_idx'] = activity_data['date'].apply(lambda x: '%s-%s' % (x.year, 'W{:02d}'.format(x.isocalendar()[1])))
+
+            # print(len(data[i]['laps']))
+            all_laps = ''
+            for j in range(len(data[i]['laps'])):
+                name = data[i]['laps'][j]['name']
+                distance = '{:.2f}'.format(data[i]['laps'][j]['distance']  * M_TO_MILES)
+                moving_time = str(timedelta(seconds=data[i]['laps'][j]['moving_time']))
+                pace = mps_to_mpm(data[i]['laps'][j]['average_speed'])
+
+
+                if j == 0:
+                    all_laps = name + ',  ' + distance + 'mi, ' + moving_time + ', ' + pace + '/mi'
+                elif j < 9:
+                    all_laps = all_laps + '\n' + name + ',  ' + distance + 'mi, ' + moving_time + ', ' + pace + '/mi'
+                else:
+                    all_laps = all_laps + '\n' + name + ', ' + distance + 'mi, ' + moving_time + ', ' + pace + '/mi'
+
+            activity_data.loc[i, 'laps'] = all_laps
+
+
 
             # Extract Activity Laps
             activity_laps = pd.DataFrame(data[i]['laps']) 
@@ -220,9 +237,11 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
             
             # Add to total list of splits
             laps = pd.concat([laps, activity_laps])
+
         except:
             break
-
+    
+        
     
 
 
@@ -233,8 +252,8 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
 
 
     laps['moving_time'] = laps['moving_time'].map(lambda a: str(timedelta(seconds=a)))
-    laps['distance'] = laps['distance'].map(lambda a: a * M_TO_MILES)
-    laps['average_speed'] = laps['average_speed'].map(lambda a: mps_to_mpk(a))
+    laps['distance'] = laps['distance'].map(lambda a: '{:.2f}'.format(a * M_TO_MILES))
+    laps['average_speed'] = laps['average_speed'].map(lambda a: mps_to_mpm(a))
 
     end = time.time()
     print(f'Time={end-start}')

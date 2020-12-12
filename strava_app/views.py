@@ -27,16 +27,14 @@ def home():
     activity_ids = get_activity_ids(access_token, total_activities, use_stored_data)
     activity_data, activity_laps = get_activity_data(access_token, activity_ids, start_date, end_date, use_stored_data)
 
-    #do table and laps first, then add in totals
-
     column_names = ['Date', 
                     'Time', 
                     'Name', 
-                    'Distance', 
+                    'Distance (miles)', 
                     'Run Time', 
                     'Type', 
-                    'Pace', 
-                    'Laps',
+                    'Average Pace', 
+                    'Laps (Number, Distance, Time, Average Pace)',
                     'Average Heart Rate', 
                     'Average Cadence',
                     'Effort (1-10)', 
@@ -45,11 +43,6 @@ def home():
     # send dataframe to list of dicts t0 make referencing in html easier
     data = activity_data.T.to_dict().values()
     laps = activity_laps.T.to_dict().values()
-    # return render_template("home.html")
-    # link_column is the column that adds a button. Hyperlink would look nicer than button
-    # return render_template("home.html", column_names=df.columns.values, row_data=list(df.values.tolist()), link_column="Map", zip=zip)
-    # return render_template("home.html", column_names=column_names, row_data=list(df.values.tolist()), link_column="Map", zip=zip)
-    # return render_template("home.html", column_names=column_names, activity_data=list(activity_data.values.tolist()), laps=list(laps.values.tolist()), zip=zip)
     return render_template("home.html", column_names=column_names, activity_data=data, laps=laps)
 
 @app.route("/about/")
