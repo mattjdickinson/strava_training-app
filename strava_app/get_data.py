@@ -43,10 +43,11 @@ def am_or_pm(i):
     # txt = i.split(':')
     # tm = time(txt[0], txt[1], txt[2])
     if i < time(12,00,00,00):
-        x = 'am'
+        x = 'AM'
     else:
-        x = 'pm'
+        x = 'PM'
     return x
+
 
 # Drawback here is that json() loads whole response into memory. However, we should not be loading in much data so OK for now?
 # Store result in dataframe then free memory
@@ -54,7 +55,6 @@ async def get(url):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             return await response.json()
-            # return response
 
 
 def get_access_token():
@@ -176,6 +176,7 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
                 'perceived_exertion', 
                 'description', 
                 'laps'
+                # 'grp_idx'
                 'Map']
 
     activity_data = pd.DataFrame(columns=col_names)
@@ -200,29 +201,28 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
         # Save down in static file to read in when developing
         with open('strava_app/static/get_activity_data.json', 'w') as file:
             json.dump(data, file, indent=4, sort_keys=True)
-
-    tm = datetime.strptime(data[1]['start_date'], '%Y-%m-%dT%H:%M:%SZ').time()
-    print(am_or_pm(tm))
     
     for i in range(len(runs)):
+        dt = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
+        activity_data.loc[i, 'id'] = data[i]['id']
+        activity_data.loc[i, 'date'] = dt
+        activity_data.loc[i, 'time'] = am_or_pm(datetime.strptime(data[i]['start_date'], '%Y-%m-%dT%H:%M:%SZ').time())
+        activity_data.loc[i, 'name'] = data[i]['name']
+        activity_data.loc[i, 'distance'] = data[i]['distance'] * M_TO_MILES
+        # activity_data.loc[i, 'moving_time'] = str(timedelta(seconds=data[i]['moving_time']))
+        activity_data.loc[i, 'moving_time'] = timedelta(seconds=data[i]['moving_time'])
+        
         try:
-            activity_data.loc[i, 'id'] = data[i]['id']
-            activity_data.loc[i, 'date'] = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
-            activity_data.loc[i, 'time'] = am_or_pm(datetime.strptime(data[i]['start_date'], '%Y-%m-%dT%H:%M:%SZ').time())
-            activity_data.loc[i, 'name'] = data[i]['name']
-            activity_data.loc[i, 'distance'] = '{:.2f}'.format(data[i]['distance'] * M_TO_MILES) + ' mi'
-            activity_data.loc[i, 'moving_time'] = str(timedelta(seconds=data[i]['moving_time']))
             activity_data.loc[i, 'workout_type'] = workout_type(data[i]['workout_type'])
             activity_data.loc[i, 'average_speed'] = mps_to_mpm(data[i]['average_speed']) + ' /mi'
             activity_data.loc[i, 'average_heartrate'] = data[i]['average_heartrate']
             activity_data.loc[i, 'average_cadence'] = data[i]['average_cadence'] * 2
             activity_data.loc[i, 'description'] = data[i]['description']
             activity_data.loc[i, 'perceived_exertion'] = int(data[i]['perceived_exertion'])
+            # activity_data.loc[i, 'grp_idx'] = '2020-W45'
+            # '%s-%s' % (date.year, 'W{:02d}'.format(date.isocalendar()[1]))
             activity_data.loc[i, 'Map'] = 'Show Map'
-            activity_data['grp_idx'] = activity_data['date'].apply(lambda x: '%s-%s' % (x.year, 'W{:02d}'.format(x.isocalendar()[1])))
 
-            # print(len(data[i]['laps']))
-            # all_laps = ''
             for j in range(len(data[i]['laps'])):
                 name = data[i]['laps'][j]['name']
                 distance = '{:.2f}'.format(data[i]['laps'][j]['distance']  * M_TO_MILES)
@@ -252,11 +252,8 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
         except Exception:
             pass
             # break
-    
+    activity_data['grp_idx'] = activity_data['date'].apply(lambda x: '%s-%s' % (x.year, 'W{:02d}'.format(x.isocalendar()[1])))
         
-    
-
-
     # We don't need all of laps, so after this we can drop what we don't need
     laps = laps.drop(['resource_state', 'activity',  'athlete', 'elapsed_time', 'start_date', 'start_date_local', 'start_index', 
                             'end_index', 'total_elevation_gain', 'max_speed',  'average_cadence', 'average_heartrate', 
@@ -305,20 +302,15 @@ def td_format(td_object):
 
 
 def weekly_totals(df):
-    df['moving_time'] = pd.to_timedelta(df['moving_time']) #was activity_data
-
+    
+    df['moving_time'] = pd.to_timedelta(df['moving_time'])
     dist = df.groupby(['grp_idx'])['distance'].sum().reset_index(name='distance')
     time = df.groupby(['grp_idx'])['moving_time'].sum().reset_index(name='time')
-    print(time)
-    # time['time'] = time['time'].apply(lambda x: '{%H:%M:%S}'.format(x))
     time['time'] = time['time'].apply(lambda x: td_format(x))
-
-    print(time)
-    # time['time'] = time['time'].applymap('{%H:%M:%SZ}'.format)
-    # print(time)
     w_totals = pd.merge(dist, time, how='left', on='grp_idx')
+    w_totals['wc'] = w_totals['grp_idx'].apply(lambda x: str(from_year_week_to_date(x)))
 
-    
+
     return w_totals
 
 

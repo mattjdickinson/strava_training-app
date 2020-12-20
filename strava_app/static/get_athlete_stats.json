@@ -7,11 +7,11 @@
         "moving_time": 1240436
     },
     "all_run_totals": {
-        "count": 1853,
-        "distance": 20097264,
-        "elapsed_time": 6009578,
-        "elevation_gain": 168810,
-        "moving_time": 5581896
+        "count": 1864,
+        "distance": 20259786,
+        "elapsed_time": 6056520,
+        "elevation_gain": 170240,
+        "moving_time": 5624359
     },
     "all_swim_totals": {
         "count": 74,
@@ -32,11 +32,11 @@
     },
     "recent_run_totals": {
         "achievement_count": 0,
-        "count": 31,
-        "distance": 477427.4951171875,
-        "elapsed_time": 121922,
-        "elevation_gain": 4628.616859436035,
-        "moving_time": 118620
+        "count": 35,
+        "distance": 512563.39599609375,
+        "elapsed_time": 136460,
+        "elevation_gain": 4918.0,
+        "moving_time": 129671
     },
     "recent_swim_totals": {
         "achievement_count": 0,
@@ -54,11 +54,11 @@
         "moving_time": 250609
     },
     "ytd_run_totals": {
-        "count": 412,
-        "distance": 4932878,
-        "elapsed_time": 1320855,
-        "elevation_gain": 40529,
-        "moving_time": 1226124
+        "count": 423,
+        "distance": 5095400,
+        "elapsed_time": 1367797,
+        "elevation_gain": 41959,
+        "moving_time": 1268587
     },
     "ytd_swim_totals": {
         "count": 2,

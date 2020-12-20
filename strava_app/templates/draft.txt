@@ -1,0 +1,28 @@
+
+        <!-- {% set value_iter = iter(activity_data) %}
+        {{ next(value_iter) }} -->
+
+
+
+                        {% if activity_data['grp_idx'][row] != if activity_data['grp_idx'][row -1] %}
+                    {{ Week break }}
+                {% else %}
+                {% endif %}
+
+
+
+                                {% if activity_data['grp_idx'][row] != activity_data['grp_idx'][row -1] %}
+                    <tr class="table-info" style="outline: thin solid"> 
+                        <td>{{ "Weekly total for week commencing: " + weekly_totals.loc[weekly_totals['grp_idx'] == '2020-W45', 'wc'].iloc[0]}}</td>
+                        <td></td>
+                        <td></td> 
+                        <td>{{ '{:.2f}'.format(weekly_totals.loc[weekly_totals['grp_idx'] == '2020-W45', 'distance'].iloc[0]) + ' mi'}}</td> 
+                        <td>{{ weekly_totals.loc[weekly_totals['grp_idx'] == '2020-W45', 'time'].iloc[0] }}</td> 
+                        <td></td> 
+                        <td></td> 
+                        <td></td> 
+                        <td></td>
+                        <td></td> 
+                        <td></td>
+                        <td></td> 
+                    </tr>
