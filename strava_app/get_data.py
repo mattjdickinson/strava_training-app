@@ -176,7 +176,6 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
                 'perceived_exertion', 
                 'description', 
                 'laps'
-                # 'grp_idx'
                 'Map']
 
     activity_data = pd.DataFrame(columns=col_names)
@@ -204,31 +203,55 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
     
     for i in range(len(runs)):
         dt = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
+        wd = dt.strftime('%a')
+        td = timedelta(seconds=data[i]['moving_time'])
         activity_data.loc[i, 'id'] = data[i]['id']
         activity_data.loc[i, 'date'] = dt
         activity_data.loc[i, 'time'] = am_or_pm(datetime.strptime(data[i]['start_date'], '%Y-%m-%dT%H:%M:%SZ').time())
         activity_data.loc[i, 'name'] = data[i]['name']
         activity_data.loc[i, 'distance'] = data[i]['distance'] * M_TO_MILES
-        # activity_data.loc[i, 'moving_time'] = str(timedelta(seconds=data[i]['moving_time']))
-        activity_data.loc[i, 'moving_time'] = timedelta(seconds=data[i]['moving_time'])
-        
+        activity_data.loc[i, 'moving_time'] = td
+        # activity_data.loc[i, 'moving_time'] = str(format_timedelta_to_HHMMSS(td))
+        # print(format_timedelta_to_HHMMSS(activity_data.loc[i, 'moving_time']))
+
+        activity_data.loc[i, 'Map'] = 'Show Map'
+
         try:
             activity_data.loc[i, 'workout_type'] = workout_type(data[i]['workout_type'])
-            activity_data.loc[i, 'average_speed'] = mps_to_mpm(data[i]['average_speed']) + ' /mi'
-            activity_data.loc[i, 'average_heartrate'] = data[i]['average_heartrate']
-            activity_data.loc[i, 'average_cadence'] = data[i]['average_cadence'] * 2
-            activity_data.loc[i, 'description'] = data[i]['description']
-            activity_data.loc[i, 'perceived_exertion'] = int(data[i]['perceived_exertion'])
-            # activity_data.loc[i, 'grp_idx'] = '2020-W45'
-            # '%s-%s' % (date.year, 'W{:02d}'.format(date.isocalendar()[1]))
-            activity_data.loc[i, 'Map'] = 'Show Map'
+        except:
+            activity_data.loc[i, 'workout_type'] = 'None'
 
+        try:
+            activity_data.loc[i, 'average_speed'] = mps_to_mpm(data[i]['average_speed']) + ' /mi'
+        except:
+            activity_data.loc[i, 'average_speed'] = activity_data.loc[i, 'distance']  /   td
+
+        try:
+            activity_data.loc[i, 'average_heartrate'] = data[i]['average_heartrate']
+        except:
+            activity_data.loc[i, 'average_heartrate'] = ''
+
+        try:
+            activity_data.loc[i, 'average_cadence'] = data[i]['average_cadence'] * 2
+        except:
+            activity_data.loc[i, 'average_cadence'] = ''
+
+        try:
+            activity_data.loc[i, 'description'] = data[i]['description']
+        except:
+            activity_data.loc[i, 'description'] = ''
+
+        try:
+            activity_data.loc[i, 'perceived_exertion'] = int(data[i]['perceived_exertion'])
+        except:
+            activity_data.loc[i, 'perceived_exertion'] = '-'
+
+        try:
             for j in range(len(data[i]['laps'])):
                 name = data[i]['laps'][j]['name']
                 distance = '{:.2f}'.format(data[i]['laps'][j]['distance']  * M_TO_MILES)
                 moving_time = str(timedelta(seconds=data[i]['laps'][j]['moving_time']))
                 pace = mps_to_mpm(data[i]['laps'][j]['average_speed'])
-
 
                 if j == 0:
                     all_laps = name + '   ' + distance + ' mi  ' + moving_time + '  ' + pace + '/mi'
@@ -239,8 +262,10 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
 
             activity_data.loc[i, 'laps'] = all_laps
 
-            # activity_data.loc[i, 'laps'] = 'laps'
+        except:
+            activity_data.loc[i, 'laps'] = all_laps
 
+        try:
             # Extract Activity Laps
             activity_laps = pd.DataFrame(data[i]['laps']) 
             activity_laps['id'] = data[i]['id']
@@ -251,9 +276,9 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
 
         except Exception:
             pass
-            # break
+
     activity_data['grp_idx'] = activity_data['date'].apply(lambda x: '%s-%s' % (x.year, 'W{:02d}'.format(x.isocalendar()[1])))
-        
+
     # We don't need all of laps, so after this we can drop what we don't need
     laps = laps.drop(['resource_state', 'activity',  'athlete', 'elapsed_time', 'start_date', 'start_date_local', 'start_index', 
                             'end_index', 'total_elevation_gain', 'max_speed',  'average_cadence', 'average_heartrate', 
@@ -266,10 +291,8 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
 
     # end = time.time()
     # print(f'Time={end-start}')
+    print(activity_data.head())
     return activity_data, laps
-
-
-# https://stackoverflow.com/questions/51750077/iterate-over-pd-df-with-date-column-by-week-python/51750811
 
 
 def from_year_week_to_date(d):
@@ -278,17 +301,24 @@ def from_year_week_to_date(d):
 
 def make_delta(entry):
     h, m, s = entry.split(':')
-    return datetime.timedelta(hours=int(h), minutes=int(m), seconds=int(s))
+    return timedelta(hours=int(h), minutes=int(m), seconds=int(s))
+    # return datetime.timedelta(hours=int(h), minutes=int(m), seconds=int(s))
 
 def td_format(td_object):
     seconds = int(td_object.total_seconds())
     periods = [
-        ('year',        60*60*24*365),
-        ('month',       60*60*24*30),
+        # ('year',        60*60*24*365),
+        # ('month',       60*60*24*30),
+        # ('day',         60*60*24),
+        # ('hour',        60*60),
+        # ('minute',      60),
+        # ('second',      1)
+        ('yr',        60*60*24*365),
+        ('mth',       60*60*24*30),
         ('day',         60*60*24),
-        ('hour',        60*60),
-        ('minute',      60),
-        ('second',      1)
+        ('hr',        60*60),
+        ('min',      60),
+        ('sec',      1)
     ]
 
     strings=[]
@@ -298,17 +328,30 @@ def td_format(td_object):
             has_s = 's' if period_value > 1 else ''
             strings.append("%s %s%s" % (period_value, period_name, has_s))
 
-    return ", ".join(strings)
+    return " ".join(strings)
 
+
+def format_timedelta_to_HHMMSS(td):
+    td_in_seconds = td.total_seconds()
+    hours, remainder = divmod(td_in_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    hours = int(hours)
+    minutes = int(minutes)
+    seconds = int(seconds)
+    if minutes < 10:
+        minutes = "0{}".format(minutes)
+    if seconds < 10:
+        seconds = "0{}".format(seconds)
+    return "{}:{}:{}".format(hours, minutes, seconds)
 
 def weekly_totals(df):
     
     df['moving_time'] = pd.to_timedelta(df['moving_time'])
     dist = df.groupby(['grp_idx'])['distance'].sum().reset_index(name='distance')
     time = df.groupby(['grp_idx'])['moving_time'].sum().reset_index(name='time')
-    time['time'] = time['time'].apply(lambda x: td_format(x))
+    time['time'] = time['time'].apply(lambda x: format_timedelta_to_HHMMSS(x))
     w_totals = pd.merge(dist, time, how='left', on='grp_idx')
-    w_totals['wc'] = w_totals['grp_idx'].apply(lambda x: str(from_year_week_to_date(x)))
+    w_totals['wc'] = w_totals['grp_idx'].apply(lambda x: str(from_year_week_to_date(x).date()))
 
 
     return w_totals
@@ -329,38 +372,3 @@ def yearly_totals():
 
 
     return 0
-
-
-# Testing
-# use_stored_data = False
-# access_token = get_access_token()
-# athlete_id = get_athlete(access_token)['id']
-# athlete_stats = get_athlete_stats(access_token, athlete_id, True)
-# total_activities  = total_activities = athlete_stats['all_ride_totals']['count'] + athlete_stats['all_run_totals']['count'] + athlete_stats['all_swim_totals']['count']
-# activity_ids = get_activity_ids(access_token, total_activities, True)
-# activity_data, laps = get_activity_data(access_token, activity_ids, True)
-# print(activity_data.head())
-# print(laps)
-
-
-
-
-# df = weekly_totals(activity_data)
-# print(df)
-
-# df = pd.to_timedelta(activity_data['moving_time'])
-# print(df.sum())
-
-
-
-# # df = df.applymap(lambda entry: make_delta(entry))
-# print(df)
-
-
-
-
-# d = "2020-W49"
-# r = datetime.strptime(d + '-1', "%G-W%V-%u")
-# print(r)
-# print(from_year_week_to_date(d))
-

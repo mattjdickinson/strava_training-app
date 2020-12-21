@@ -54,3 +54,20 @@ td, th {
     padding-left: 150px;
     padding-right: 150px;
 }
+
+
+/* table thead tr{
+    display:block;
+    height:2000px;
+}
+
+table th,table td{
+    width:100px;
+}
+
+
+tbody{
+  display:block;
+  height:200px;
+  overflow:auto;
+} */

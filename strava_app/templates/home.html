@@ -6,24 +6,26 @@ Home
 <p>Training log</p>
 
 
-
-
 <div class="table-container">
     <table class="table table-hover .table-responsive .table-sm w-auto small">
-
+        <thead></thead>
         <tr class = "header">
             {% for col in column_names %}
             <th>{{ col }}</th>
             {% endfor %}
         </tr>
+        </thead>
 
+        <tbody>
         {% for row in range(activity_data|length) %}
-        
+
             {% if row == 0 %}
                 {% set week_flag = activity_data['grp_idx'][0] %}
+
                 <tr class="table-info" style="outline: thin solid"> 
-                    <td>{{ "Weekly total for week commencing: " + weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'wc'].iloc[0]}}</td>
+                    <td>{{ "Total for week commencing: " + weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'wc'].iloc[0]}}</td>
                     <td></td>
+                    <td></td> 
                     <td></td> 
                     <td>{{ '{:.2f}'.format(weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'distance'].iloc[0]) + ' mi'}}</td> 
                     <td>{{ weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'time'].iloc[0] }}</td> 
@@ -47,14 +49,15 @@ Home
                 {% endif %}
                     
                         <td>{{ activity_data['date'][row] }}</td>
+                        <td>{{ activity_data['date'][row].strftime('%a') }}</td>
                         <td>{{ activity_data['time'][row] }}</td>
                         <td>{{ activity_data['name'][row] }}</td>
-                        <td>{{ '{:.2f}'.format(activity_data['distance'][row]) + ' mi'}}</td>
+                        <td>{{ '{:.2f}'.format(activity_data['distance'][row]) + ' mi' }}</td>
                         <td>{{ activity_data['moving_time'][row] }}</td>
                         <td>{{ activity_data['workout_type'][row] }}</td>
                         <td>{{ activity_data['average_speed'][row] }}</td>     
                         <!-- use pre tag below to allow for white space and put laps on new lines -->
-                        <td><pre>{{ activity_data['laps'][row]}}</pre></td>   
+                        <td><pre>{{ activity_data['laps'][row]  }}</pre></td>   
                         <td>{{ activity_data['average_heartrate'][row] }}</td>
                         <td>{{ activity_data['average_cadence'][row] }}</td>
                         <td>{{ activity_data['perceived_exertion'][row] }}</td>
@@ -62,11 +65,27 @@ Home
                     </tr> 
 
             {% else %}
+                {% if activity_data['grp_idx'][row] != activity_data['grp_idx'][row - 1] %}
+                    {% set empty_row_flag = True %}
+                {% else %}
+                    {% set empty_row_flag = False %}
+                {% endif %}
+
+                {% if empty_row_flag == True %}
+                    <tr>
+                        <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>    
+                    </tr>
+                    {% set empty_row_flag = False %}
+                {% else %}
+                {% endif %}
+
                 {% set week_flag = activity_data['grp_idx'][row] %}
                 
                 {% if activity_data['grp_idx'][row] != activity_data['grp_idx'][row -1] %}
+
                     <tr class="table-info" style="outline: thin solid"> 
                         <td>{{ "Weekly total for week commencing: " + weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'wc'].iloc[0]}}</td>
+                        <td></td>
                         <td></td>
                         <td></td> 
                         <td>{{ '{:.2f}'.format(weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'distance'].iloc[0]) + ' mi'}}</td> 
@@ -94,23 +113,23 @@ Home
                 {% endif %}
                     
                         <td>{{ activity_data['date'][row] }}</td>
+                        <td>{{ activity_data['date'][row].strftime('%a') }}</td>
                         <td>{{ activity_data['time'][row] }}</td>
                         <td>{{ activity_data['name'][row] }}</td>
-                        <td>{{ '{:.2f}'.format(activity_data['distance'][row]) + ' mi'}}</td>
+                        <td>{{ '{:.2f}'.format(activity_data['distance'][row]) + ' mi' }}</td>
                         <td>{{ activity_data['moving_time'][row] }}</td>
                         <td>{{ activity_data['workout_type'][row] }}</td>
                         <td>{{ activity_data['average_speed'][row] }}</td>     
                         <!-- use pre tag below to allow for white space and put laps on new lines -->
-                        <td><pre>{{ activity_data['laps'][row]}}</pre></td>   
+                        <td><pre>{{ activity_data['laps'][row] }}</pre></td>   
                         <td>{{ activity_data['average_heartrate'][row] }}</td>
                         <td>{{ activity_data['average_cadence'][row] }}</td>
                         <td>{{ activity_data['perceived_exertion'][row] }}</td>
                         <td>{{ activity_data['description'][row] }}</td>
                     </tr> 
             {% endif %}
-                
         {% endfor %}
-
+    </tbody>
     </table>
 </div>
 
