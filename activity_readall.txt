@@ -10,8 +10,8 @@ https://www.strava.com/oauth/authorize?client_id=55362&redirect_uri=http://local
 
 https://www.strava.com/oauth/token?client_id=55362&client_secret=ce6ff8b1b337d045cd05e68e038f716a050d1ef9&code=792dace64644c9ca6c46c544f9f3aca0c60d4dc8&grant_type=authorization_code
 
-"refresh_token":aa8407ef4cb66a2ef8c7bc685dc64d9debbd8af4
-"access_token":4b7758c42798b3b17c0b2dd620fe46d65daf63a4
+"refresh_token":xxx
+"access_token":xxx
 
 3) View your activiies using the access token just received GET
 

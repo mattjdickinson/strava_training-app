@@ -360,7 +360,7 @@ def weekly_totals(df):
     time['time'] = time['time'].apply(lambda x: format_timedelta_to_HHMMSS(x))
     w_totals = pd.merge(dist, time, how='left', on='grp_idx')
     w_totals['wc'] = w_totals['grp_idx'].apply(lambda x: from_year_week_to_date(x).date())
-
+    w_totals['distance'] = w_totals['distance'].map(lambda a: '{:.2f}'.format(a))
     return w_totals
 
 
@@ -375,7 +375,7 @@ def monthly_totals(df):
     # use strptime to read date in specific format, then strftime to put it in desired format
     for i in range(len(monthly)):
         monthly.loc[i, 'month_start'] = datetime(year=monthly.loc[i, 'year'] ,month=monthly.loc[i, 'month'], day=1).date().strftime('%b-%Y')
-        
+    monthly['distance'] = monthly['distance'].map(lambda a: '{:.2f}'.format(a))
     return monthly
 
 

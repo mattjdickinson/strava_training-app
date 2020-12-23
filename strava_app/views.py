@@ -51,8 +51,37 @@ def home():
 
     return render_template("home.html", column_names=column_names, activity_data=activity_data, weekly_totals=weekly)
 
-@app.route("/about/")
-def about():
+@app.route("/weekly/")
+def weekly():
+    use_stored_data = True
+
+    start_date =  datetime(2020, 1, 1).date()
+    end_date = datetime(2020, 12, 31).date()
+    access_token = get_access_token()
+    athlete_id = get_athlete(access_token)['id']
+    athlete_stats = get_athlete_stats(access_token, athlete_id, use_stored_data)
+    total_activities  = total_activities = athlete_stats['all_ride_totals']['count'] + athlete_stats['all_run_totals']['count'] + athlete_stats['all_swim_totals']['count']
+    activity_ids = get_activity_ids(access_token, total_activities, use_stored_data)
+    runs = activity_ids[(activity_ids.type == 'Run')]
+    weekly = weekly_totals(runs)
+    labels = weekly['wc'][weekly.wc >= start_date]
+    values = weekly['distance'][weekly.wc >= start_date]
+
+
+    # monthly = monthly_totals(runs)
+    # print(monthly)
+    # labels = monthly['month_start']
+    # values = monthly['distance'] 
+
+
+
+    bar_labels=labels
+    bar_values=values
+    return render_template("weekly.html", title='Miles per week', max=120, labels=bar_labels, values=bar_values)
+
+
+@app.route("/monthly/")
+def monthly():
     use_stored_data = True
 
     start_date =  datetime(2018, 1, 1).date()
@@ -63,46 +92,17 @@ def about():
     total_activities  = total_activities = athlete_stats['all_ride_totals']['count'] + athlete_stats['all_run_totals']['count'] + athlete_stats['all_swim_totals']['count']
     activity_ids = get_activity_ids(access_token, total_activities, use_stored_data)
     runs = activity_ids[(activity_ids.type == 'Run')]
+    
+    # Causes assertion error if the below line is omitted. Don't know why
     weekly = weekly_totals(runs)
 
     monthly = monthly_totals(runs)
-    print(monthly)
-    # column_names = ['Week commencing',
-    #                 'Total Distance (mi)', 
-    #                 'Total Time']
-    
-    # return render_template("about.html", column_names=column_names, weekly_totals=weekly)
     labels = monthly['month_start']
-    values = monthly['distance'] #[monthly.month_start >= start_date]
-
-
-    bar_labels=labels
-    bar_values=values
-    return render_template("api.html", title='Monthly mileage', max=500, labels=bar_labels, values=bar_values)
-
-
-@app.route("/api/")
-def api():
-    use_stored_data = True
-
-    start_date =  datetime(2020, 1, 1).date()
-    end_date = datetime(2020, 12, 31).date()
-
-    access_token = get_access_token()
-    athlete_id = get_athlete(access_token)['id']
-    athlete_stats = get_athlete_stats(access_token, athlete_id, use_stored_data)
-    total_activities  = total_activities = athlete_stats['all_ride_totals']['count'] + athlete_stats['all_run_totals']['count'] + athlete_stats['all_swim_totals']['count']
-    activity_ids = get_activity_ids(access_token, total_activities, use_stored_data)
-    runs = activity_ids[(activity_ids.type == 'Run')]
-    weekly = weekly_totals(runs)
-    
-    labels = weekly['wc'][weekly.wc >= start_date]
-    values = weekly['distance'][weekly.wc >= start_date]
-
+    values = monthly['distance'] 
 
     bar_labels=labels
     bar_values=values
-    return render_template("api.html", title='Weekly mileage for 2020', max=120, labels=bar_labels, values=bar_values)
+    return render_template("monthly.html", title='Monthly mileage', max=500, labels=bar_labels, values=bar_values)
     
 
 # https://developers.strava.com/docs/authentication/
@@ -114,8 +114,4 @@ def get_code():
 
     return render_template("api.html")
 
-# @app.route("/api/data")
-# def get_data():
-
-#     return app.send_static_file("data.json")
 
