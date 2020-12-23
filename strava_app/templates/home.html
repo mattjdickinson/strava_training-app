@@ -27,7 +27,7 @@ Home
                     <td></td>
                     <td></td> 
                     <td></td> 
-                    <td>{{ '{:.2f}'.format(weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'distance'].iloc[0]) + ' mi'}}</td> 
+                    <td>{{ weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'distance'].iloc[0]|string + ' mi'}}</td> 
                     <td>{{ weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'time'].iloc[0] }}</td> 
                     <td></td> 
                     <td></td> 
@@ -88,7 +88,7 @@ Home
                         <td></td>
                         <td></td>
                         <td></td> 
-                        <td>{{ '{:.2f}'.format(weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'distance'].iloc[0]) + ' mi'}}</td> 
+                        <td>{{ weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'distance'].iloc[0]|string + ' mi'}}</td> 
                         <td>{{ weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'time'].iloc[0] }}</td> 
                         <td></td> 
                         <td></td> 
