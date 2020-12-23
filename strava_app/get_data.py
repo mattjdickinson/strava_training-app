@@ -57,6 +57,14 @@ async def get(url):
             return await response.json()
 
 
+
+def authroise_user():
+    auth_url = "https://www.strava.com/oauth/authorize"
+    redirect_uri = "http://localhost:8080/authorized"
+    return 0
+
+
+
 def get_access_token():
     auth_url = "https://www.strava.com/oauth/token"
 
@@ -99,21 +107,21 @@ def get_athlete_stats(access_token, athlete_id, use_stored_data):
 
 def get_activity_ids(access_token, total, use_stored_data):
     # start = time.time()
-
+    global M_TO_MILES
     # Set up a data frame for each activity
-    col_names = ['id','type','date']
+    col_names = ['id','type','date', 'distance', 'moving_time']
     activities = pd.DataFrame(columns=col_names)
 
     # Number of activities to feature in each get request. High limit to reduce number of API calls
-    per_page = 30
+    per_page = 100
 
     # Use combined totals of athletes runs, rides, and swims to base how many activities we  will draw from
     # Then double it in case athlete has recorded additional activities like yoga, walking etc
 
     # +1 needed as range will run up to but not including
     # pages = math.ceil((total / per_page) * 2) + 1
-    pages = 3
-    print(f'Pages = {pages}')
+    pages = 11
+    # print(f'Pages = {pages}')
 
     if use_stored_data:
         with open('strava_app/static/get_activity_ids.json', 'r') as file:
@@ -122,7 +130,7 @@ def get_activity_ids(access_token, total, use_stored_data):
     else:
         url = "https://www.strava.com/api/v3/athlete/activities"
 
-        col_names = ['id','type','date']
+        col_names = ['id','type','date', 'distance', 'moving_time']
         activities = pd.DataFrame(columns=col_names)
 
         asyncio.set_event_loop(asyncio.SelectorEventLoop()) # need this line so that runs in flask. Looks like bug with new event policy in Python 3.8
@@ -137,7 +145,7 @@ def get_activity_ids(access_token, total, use_stored_data):
         with open('strava_app/static/get_activity_ids.json', 'w') as file:
             json.dump(data, file, indent=4, sort_keys=True)
 
-        # Results is a  list and each entry has a json with 100 activities
+        # Results is a list and each entry has a json with 100 activities
         print(f'Results length= {len(data)}')
 
     k = 0
@@ -147,10 +155,14 @@ def get_activity_ids(access_token, total, use_stored_data):
                 activities.loc[k,'id'] = data[i][j]['id']
                 activities.loc[k,'type'] = data[i][j]['type']
                 activities.loc[k,'date'] = datetime.strptime(data[i][j]['start_date'][:10], '%Y-%m-%d').date()
+                activities.loc[k, 'distance'] = data[i][j]['distance'] * M_TO_MILES
+                activities.loc[k, 'moving_time'] = timedelta(seconds=data[i][j]['moving_time'])
+
                 k += 1
             except: # no data to parse
                 break
-
+    activities['grp_idx'] = activities['date'].apply(lambda x: '%s-%s' % (x.year, 'W{:02d}'.format(x.isocalendar()[1])))
+    # print(activities)
     # end = time.time()
     # print(f'Time={end-start}')
     return activities
@@ -185,7 +197,7 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
     laps = pd.DataFrame(columns=col_names)
 
     runs = activities[(activities.type == 'Run') & (activities.date >= start_date) & (activities.date <= end_date)]
-    print(len(runs))
+    # print(len(runs))
     if use_stored_data:
         with open('strava_app/static/get_activity_data.json', 'r') as file:
             data = json.load(file)
@@ -203,7 +215,6 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
     
     for i in range(len(runs)):
         dt = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
-        wd = dt.strftime('%a')
         td = timedelta(seconds=data[i]['moving_time'])
         activity_data.loc[i, 'id'] = data[i]['id']
         activity_data.loc[i, 'date'] = dt
@@ -299,20 +310,16 @@ def from_year_week_to_date(d):
     date = datetime.strptime(d + '-1', "%G-W%V-%u")
     return date
 
+
 def make_delta(entry):
     h, m, s = entry.split(':')
     return timedelta(hours=int(h), minutes=int(m), seconds=int(s))
     # return datetime.timedelta(hours=int(h), minutes=int(m), seconds=int(s))
 
+
 def td_format(td_object):
     seconds = int(td_object.total_seconds())
     periods = [
-        # ('year',        60*60*24*365),
-        # ('month',       60*60*24*30),
-        # ('day',         60*60*24),
-        # ('hour',        60*60),
-        # ('minute',      60),
-        # ('second',      1)
         ('yr',        60*60*24*365),
         ('mth',       60*60*24*30),
         ('day',         60*60*24),
@@ -344,6 +351,7 @@ def format_timedelta_to_HHMMSS(td):
         seconds = "0{}".format(seconds)
     return "{}:{}:{}".format(hours, minutes, seconds)
 
+
 def weekly_totals(df):
     
     df['moving_time'] = pd.to_timedelta(df['moving_time'])
@@ -351,24 +359,50 @@ def weekly_totals(df):
     time = df.groupby(['grp_idx'])['moving_time'].sum().reset_index(name='time')
     time['time'] = time['time'].apply(lambda x: format_timedelta_to_HHMMSS(x))
     w_totals = pd.merge(dist, time, how='left', on='grp_idx')
-    w_totals['wc'] = w_totals['grp_idx'].apply(lambda x: str(from_year_week_to_date(x).date()))
-
+    w_totals['wc'] = w_totals['grp_idx'].apply(lambda x: from_year_week_to_date(x).date())
 
     return w_totals
 
 
+def monthly_totals(df):
 
-def monthly_totals():
+    df.index = pd.to_datetime(df['date'], format='%Y-%m-%d')
+    df = df.drop(['id', 'date', 'type', 'grp_idx'], axis=1)
+    monthly = df.groupby(by=[df.index.year, df.index.month]).sum()
+    monthly['moving_time'] = monthly['moving_time'].apply(lambda x: format_timedelta_to_HHMMSS(x))
+    monthly.index = monthly.index.set_names(['year', 'month'])
+    monthly.reset_index(inplace=True)
+    # use strptime to read date in specific format, then strftime to put it in desired format
+    for i in range(len(monthly)):
+        monthly.loc[i, 'month_start'] = datetime(year=monthly.loc[i, 'year'] ,month=monthly.loc[i, 'month'], day=1).date().strftime('%b-%Y')
+        
+    return monthly
 
 
+def annual_totals(df):
+
+    df.index = pd.to_datetime(df['date'], format='%Y-%m-%d')
+    df = df.drop(['id', 'date', 'type', 'grp_idx'], axis=1)
+    annually = df.groupby(by=[df.index.year, df.index.month]).sum()
+    annually['moving_time'] = annually['moving_time'].apply(lambda x: format_timedelta_to_HHMMSS(x))
+    annually.index = annually.index.set_names(['year', 'month'])
+    annually.reset_index(inplace=True)
+
+    return annually
 
 
-    return 0
+# Can use this to populate get_activity_ids, with high limits easily
+# But will need to remove 'strava_app' for address to read/store jsons
+# use_stored_data = True
 
+# start_date =  datetime(2020, 1, 1).date()
+# end_date = datetime(2020, 12, 31).date()
 
-def yearly_totals():
-
-
-
-
-    return 0
+# access_token = get_access_token()
+# athlete_id = get_athlete(access_token)['id']
+# athlete_stats = get_athlete_stats(access_token, athlete_id, use_stored_data)
+# total_activities  = total_activities = athlete_stats['all_ride_totals']['count'] + athlete_stats['all_run_totals']['count'] + athlete_stats['all_swim_totals']['count']
+# activity_ids = get_activity_ids(access_token, total_activities, use_stored_data)
+# runs = activity_ids[(activity_ids.type == 'Run')]
+# monthly = monthly_totals(runs)
+# print(monthly)

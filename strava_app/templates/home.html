@@ -23,7 +23,7 @@ Home
                 {% set week_flag = activity_data['grp_idx'][0] %}
 
                 <tr class="table-info" style="outline: thin solid"> 
-                    <td>{{ "Total for week commencing: " + weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'wc'].iloc[0]}}</td>
+                    <td>{{ "Total for week commencing: " + weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'wc'].iloc[0]|string  }}</td>
                     <td></td>
                     <td></td> 
                     <td></td> 
@@ -84,7 +84,7 @@ Home
                 {% if activity_data['grp_idx'][row] != activity_data['grp_idx'][row -1] %}
 
                     <tr class="table-info" style="outline: thin solid"> 
-                        <td>{{ "Weekly total for week commencing: " + weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'wc'].iloc[0]}}</td>
+                        <td>{{ "Weekly total for week commencing: " + weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'wc'].iloc[0]|string }}</td>
                         <td></td>
                         <td></td>
                         <td></td> 
