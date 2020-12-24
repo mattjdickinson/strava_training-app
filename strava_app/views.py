@@ -15,8 +15,6 @@ requests_cache.install_cache('strava_cache', backend='sqlite', expire_after=180)
 
 # when add in authorise code, then we want to pull api and cache, so will need new route
 
-
-
 @app.route("/")
 def home():
 

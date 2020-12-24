@@ -8,7 +8,6 @@ import pandas as pd
 import logging
 import aiohttp
 import asyncio
-# import time
 import math
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -122,14 +121,14 @@ def get_activity_ids(access_token, total, use_stored_data):
     activities = pd.DataFrame(columns=col_names)
 
     # Number of activities to feature in each get request. High limit to reduce number of API calls
-    per_page = 150
+    per_page = 200
 
     # Use combined totals of athletes runs, rides, and swims to base how many activities we  will draw from
     # Then double it in case athlete has recorded additional activities like yoga, walking etc
 
     # +1 needed as range will run up to but not including
     # pages = math.ceil((total / per_page) * 2) + 1
-    pages = 11
+    pages = 8
     # print(f'Pages = {pages}')
 
     if use_stored_data:
@@ -206,6 +205,8 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
     laps = pd.DataFrame(columns=col_names)
 
     runs = activities[(activities.type == 'Run') & (activities.date >= start_date) & (activities.date <= end_date)]
+    # Cap total API calls so asnot to breach 100 calls per 15min limit
+    cap = 70
     # print(len(runs))
     if use_stored_data:
         with open('strava_app/static/get_activity_data.json', 'r') as file:
@@ -215,7 +216,7 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
         basic_url = "https://www.strava.com/api/v3/activities"
         asyncio.set_event_loop(asyncio.SelectorEventLoop())
         loop = asyncio.get_event_loop()
-        coroutines = [get(basic_url + '/' + str(runs['id'][i]) + '?access_token='+ access_token) for i in range(len(runs))]
+        coroutines = [get(basic_url + '/' + str(runs['id'][i]) + '?access_token='+ access_token) for i in range(cap)]
         data = loop.run_until_complete(asyncio.gather(*coroutines))
 
         # Save down in static file to read in when developing
@@ -223,8 +224,9 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
             json.dump(data, file, indent=4, sort_keys=True)
     
     # for i in range(len(runs)):
-    # Limiting to 80 as Strava API limits to 100 requests per 15min
-    for i in range(70):    
+    # Limiting to 70 as Strava API limits to 100 requests per 15min
+    # print(data[1]['start_date'])
+    for i in range(cap):    
         dt = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
         td = timedelta(seconds=data[i]['moving_time'])
         activity_data.loc[i, 'id'] = data[i]['id']
