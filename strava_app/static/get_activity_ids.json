@@ -29,7 +29,7 @@
             "has_kudoed": false,
             "heartrate_opt_out": false,
             "id": 4512602372,
-            "kudos_count": 12,
+            "kudos_count": 13,
             "location_city": null,
             "location_country": "United Kingdom",
             "location_state": null,
@@ -46181,7 +46181,7 @@
             "workout_type": null
         },
         {
-            "achievement_count": 6,
+            "achievement_count": 7,
             "athlete": {
                 "id": 2299904,
                 "resource_state": 1

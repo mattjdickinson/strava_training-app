@@ -200,14 +200,11 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
 
     activity_data = pd.DataFrame(columns=col_names)
 
-    # initialize dataframe for laps data
-    col_names = ['id','date']
-    laps = pd.DataFrame(columns=col_names)
-
     runs = activities[(activities.type == 'Run') & (activities.date >= start_date) & (activities.date <= end_date)]
+
     # Cap total API calls so asnot to breach 100 calls per 15min limit
     cap = 70
-    # print(len(runs))
+    
     if use_stored_data:
         with open('strava_app/static/get_activity_data.json', 'r') as file:
             data = json.load(file)
@@ -224,8 +221,6 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
             json.dump(data, file, indent=4, sort_keys=True)
     
     # for i in range(len(runs)):
-    # Limiting to 70 as Strava API limits to 100 requests per 15min
-    # print(data[1]['start_date'])
     for i in range(cap):    
         dt = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
         td = timedelta(seconds=data[i]['moving_time'])
@@ -287,36 +282,13 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
             activity_data.loc[i, 'laps'] = all_laps
 
         except:
-            activity_data.loc[i, 'laps'] = all_laps
-
-        try:
-            # Extract Activity Laps
-            activity_laps = pd.DataFrame(data[i]['laps']) 
-            activity_laps['id'] = data[i]['id']
-            activity_laps['date'] = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
-            
-            # Add to total list of splits
-            laps = pd.concat([laps, activity_laps])
-
-        except Exception:
-            pass
+            activity_data.loc[i, 'laps'] = '-'
 
     activity_data['grp_idx'] = activity_data['date'].apply(lambda x: '%s-%s' % (x.year, 'W{:02d}'.format(x.isocalendar()[1])))
 
-    # We don't need all of laps, so after this we can drop what we don't need
-    laps = laps.drop(['resource_state', 'activity',  'athlete', 'elapsed_time', 'start_date', 'start_date_local', 'start_index', 
-                            'end_index', 'total_elevation_gain', 'max_speed',  'average_cadence', 'average_heartrate', 
-                            'max_heartrate', 'lap_index',  'split', 'pace_zone'], axis=1)
-
-
-    laps['moving_time'] = laps['moving_time'].map(lambda a: str(timedelta(seconds=a)))
-    laps['distance'] = laps['distance'].map(lambda a: '{:.2f}'.format(a * M_TO_MILES))
-    laps['average_speed'] = laps['average_speed'].map(lambda a: mps_to_mpm(a))
-
     # end = time.time()
     # print(f'Time={end-start}')
-    print(activity_data.head())
-    return activity_data, laps
+    return activity_data
 
 
 def from_year_week_to_date(d):
@@ -402,20 +374,3 @@ def annual_totals(df):
     annually.reset_index(inplace=True)
 
     return annually
-
-
-# Can use this to populate get_activity_ids, with high limits easily
-# But will need to remove 'strava_app' for address to read/store jsons
-# use_stored_data = True
-
-# start_date =  datetime(2020, 1, 1).date()
-# end_date = datetime(2020, 12, 31).date()
-
-# access_token = get_access_token()
-# athlete_id = get_athlete(access_token)['id']
-# athlete_stats = get_athlete_stats(access_token, athlete_id, use_stored_data)
-# total_activities  = total_activities = athlete_stats['all_ride_totals']['count'] + athlete_stats['all_run_totals']['count'] + athlete_stats['all_swim_totals']['count']
-# activity_ids = get_activity_ids(access_token, total_activities, use_stored_data)
-# runs = activity_ids[(activity_ids.type == 'Run')]
-# monthly = monthly_totals(runs)
-# print(monthly)

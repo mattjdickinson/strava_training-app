@@ -1,5 +1,5 @@
 from datetime import datetime, time
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from . import app
 import requests
 import requests_cache
@@ -15,11 +15,14 @@ requests_cache.install_cache('strava_cache', backend='sqlite', expire_after=180)
 
 # when add in authorise code, then we want to pull api and cache, so will need new route
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def home():
 
-    #Default to  True.  Has set code so that 100 pulls per 15mins API limit won't be breached. Add toggle to website
-    use_stored_data = True
+    #Default to True. Has set code so that 100 pulls per 15mins API limit won't be breached. Add toggle to website
+    if request.method == "POST": # user hit 'Refresh  data' button
+        use_stored_data = False
+    else:
+        use_stored_data = True # user hit 'Home' in nav bar
 
     if use_stored_data:
         # dummy values  to pass into subsequent functions
@@ -37,7 +40,7 @@ def home():
     start_date =  datetime(2020, 10, 1).date()
     end_date = datetime(2020, 12, 31).date()
 
-    activity_data, activity_laps = get_activity_data(access_token, activity_ids, start_date, end_date, use_stored_data)
+    activity_data = get_activity_data(access_token, activity_ids, start_date, end_date, use_stored_data)
     weekly = weekly_totals(activity_data)
 
     # This function works in get.data.py, but when it is run in here, the '0 days' gets displayed in home.html
