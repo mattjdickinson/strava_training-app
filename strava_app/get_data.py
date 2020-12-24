@@ -113,7 +113,7 @@ def get_activity_ids(access_token, total, use_stored_data):
     activities = pd.DataFrame(columns=col_names)
 
     # Number of activities to feature in each get request. High limit to reduce number of API calls
-    per_page = 100
+    per_page = 150
 
     # Use combined totals of athletes runs, rides, and swims to base how many activities we  will draw from
     # Then double it in case athlete has recorded additional activities like yoga, walking etc
@@ -213,7 +213,9 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
         with open('strava_app/static/get_activity_data.json', 'w') as file:
             json.dump(data, file, indent=4, sort_keys=True)
     
-    for i in range(len(runs)):
+    # for i in range(len(runs)):
+    # Limiting to 80 as Strava API limits to 100 requests per 15min
+    for i in range(75):    
         dt = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
         td = timedelta(seconds=data[i]['moving_time'])
         activity_data.loc[i, 'id'] = data[i]['id']

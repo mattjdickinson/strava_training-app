@@ -3,8 +3,7 @@
 Weekly totals
 {% endblock %}
 {% block content %}
-<p>Weekly totals</p>
-
+<p>Weekly mileage</p>
 
 <head>
     <meta charset="utf-8" />
@@ -34,10 +33,7 @@ Weekly totals
             data : [
               {% for item in values %}
                  "{{ item }}",
-              {% endfor %},
-              // {% for item in values2 %}
-              //   "{{ item }}",
-              // {% endfor %}
+                {% endfor %}
           ]
             }
           ]
@@ -50,9 +46,6 @@ Weekly totals
          max = {{max}}
   
        // draw bar chart
-
-
-       
        new Chart(mychart).Bar(barData, {
          scaleOverride: true,
          scaleSteps: steps,
