@@ -215,7 +215,7 @@ def get_activity_data(access_token, activities, start_date, end_date, use_stored
     
     # for i in range(len(runs)):
     # Limiting to 80 as Strava API limits to 100 requests per 15min
-    for i in range(75):    
+    for i in range(70):    
         dt = datetime.strptime(data[i]['start_date'][:10], '%Y-%m-%d').date()
         td = timedelta(seconds=data[i]['moving_time'])
         activity_data.loc[i, 'id'] = data[i]['id']
