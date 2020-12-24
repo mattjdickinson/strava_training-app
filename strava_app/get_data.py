@@ -57,8 +57,7 @@ async def get(url):
             return await response.json()
 
 
-
-def authroise_user():
+def authroise_user(): 
     auth_url = "https://www.strava.com/oauth/authorize"
     redirect_uri = "http://localhost:8080/authorized"
     return 0
@@ -67,6 +66,16 @@ def authroise_user():
 
 def get_access_token():
     auth_url = "https://www.strava.com/oauth/token"
+
+    # Make sure keys are set
+    if not os.environ.get('CLIENT_ID'):
+        raise RuntimeError('CLIENT_ID not set')
+
+    if not os.environ.get('CLIENT_SECRET'):
+        raise RuntimeError('CLIENT_SECRET not set')
+
+    if not os.environ.get('REFRESH_TOKEN'):
+        raise RuntimeError('REFRESH_TOKEN not set')
 
     payload = {
         'client_id': os.environ.get('CLIENT_ID'),
