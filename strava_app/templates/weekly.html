@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block title %}
-About us
+Weekly totals
 {% endblock %}
 {% block content %}
 <p>Weekly totals</p>
@@ -34,7 +34,10 @@ About us
             data : [
               {% for item in values %}
                  "{{ item }}",
-                {% endfor %}
+              {% endfor %},
+              // {% for item in values2 %}
+              //   "{{ item }}",
+              // {% endfor %}
           ]
             }
           ]
@@ -47,6 +50,9 @@ About us
          max = {{max}}
   
        // draw bar chart
+
+
+       
        new Chart(mychart).Bar(barData, {
          scaleOverride: true,
          scaleSteps: steps,

@@ -8,6 +8,8 @@ import json
 import os
 from .get_data import get_access_token, get_athlete, get_athlete_stats, get_activity_ids, get_activity_data, weekly_totals, format_timedelta_to_HHMMSS, monthly_totals
 import asyncio
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 requests_cache.install_cache('strava_cache', backend='sqlite', expire_after=180)
 
@@ -66,7 +68,7 @@ def weekly():
     weekly = weekly_totals(runs)
     labels = weekly['wc'][weekly.wc >= start_date]
     values = weekly['distance'][weekly.wc >= start_date]
-
+    values2 = weekly['time'][weekly.wc >= start_date]
 
     # monthly = monthly_totals(runs)
     # print(monthly)
@@ -77,7 +79,44 @@ def weekly():
 
     bar_labels=labels
     bar_values=values
-    return render_template("weekly.html", title='Miles per week', max=120, labels=bar_labels, values=bar_values)
+    line_values=values2
+
+
+
+    # # Create figure with secondary y-axis
+    # fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    # # Add traces
+    # fig.add_trace(
+    #     # go.Scatter(x=[1, 2, 3], y=[40, 50, 60], name="yaxis data"),
+    #     go.Scatter(x=bar_labels, y=bar_values, name="yaxis data"),
+    #     secondary_y=False,
+    # )
+
+    # fig.add_trace(
+    #     # go.Scatter(x=[2, 3, 4], y=[4, 5, 6], name="yaxis2 data"),
+    #     go.Scatter(x=bar_labels, y=line_values, name="yaxis2 data"),
+    #     secondary_y=True,
+    # )
+
+    # # Add figure title
+    # fig.update_layout(
+    #     title_text="Double Y Axis Example"
+    # )
+
+    # # Set x-axis title
+    # fig.update_xaxes(title_text="xaxis title")
+
+    # # Set y-axes titles
+    # fig.update_yaxes(title_text="<b>primary</b> yaxis title", secondary_y=False)
+    # fig.update_yaxes(title_text="<b>secondary</b> yaxis title", secondary_y=True)
+
+    # fig.show()
+
+
+
+
+    return render_template("weekly.html", title='Miles per week', max=100, labels=bar_labels, values=bar_values, values2=line_values)
 
 
 @app.route("/monthly/")
