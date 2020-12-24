@@ -3,8 +3,12 @@
 Home
 {% endblock %}
 {% block content %}
-<p>Training log</p>
+<p>Training log for past 70 activities.</p> 
+<p>Hit 'Refresh data' to load live data. Note this action can only be performed once every 15mins as per Strava's set API limits.</p>
 
+<form action="/home" method="post">
+    <button class="btn btn-primary" type="submit">Refresh data</button>
+</form>
 
 <div class="table-container">
     <table class="table table-hover .table-responsive .table-sm w-auto small">
