@@ -3,9 +3,18 @@
 ## Project overview
 This is a web app using Strava's API. My latest runs are pulled from Strava and presented in a traditional training log for running.  
 
+From:
+
+
+To:
+
 ![Training](https://github.com/mattjdickinson/strava-training/blob/master/Screenshots/Screenshot%202020-12-28%20at%2012.34.20.png?raw=true) 
 
 The app includes mileage totals by weeky and monthly:
+
+![Weekly](https://github.com/mattjdickinson/strava-training/blob/master/Screenshots/Screenshot%202020-12-28%20at%2012.51.07.png?raw=true) 
+
+![Monthly](https://github.com/mattjdickinson/strava-training/blob/master/Screenshots/Screenshot%202020-12-28%20at%2012.51.22.png?raw=true) 
 
 
 
