@@ -9,9 +9,9 @@
 
     <body>
         <div class="navbar">
-            <a href="{{ url_for('home') }}" class="navbar-item">Home</a>
-            <a href="{{ url_for('weekly') }}" class="navbar-item">Weekly</a>
-            <a href="{{ url_for('monthly') }}" class="navbar-item">Monthly</a>
+            <a href="{{ url_for('home') }}" class="navbar-item">Latest Runs</a>
+            <a href="{{ url_for('weekly') }}" class="navbar-item">Weekly Totals</a>
+            <a href="{{ url_for('monthly') }}" class="navbar-item">Monthly Totals</a>
         </div>
 
         <div class="body-content">
@@ -19,7 +19,7 @@
             {% endblock %}
             <hr/>
             <footer>
-                <p>Matt Dickinson - Powered by Strava</p>
+                <p class="foot">Matt Dickinson - Powered by Strava</p>
             </footer>
         </div>
     </body>
