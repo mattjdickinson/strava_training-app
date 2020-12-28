@@ -1,7 +1,7 @@
 # Strava Training Log
 
 ## Project overview
-This is a web app using Strava's API. My latest runs are pulled from Strava and presented in a traditional training log for running.  
+This is a web app built in Flask using Strava's API to present the user's running training log. 
 
 From:
 
@@ -63,8 +63,12 @@ The app includes mileage totals by weeky and monthly:
 
 ## Limitations
 
+Srava's API limits requests at 100 every 15 minutes and 1000 daily. As such, when the user pulls live data, I have ensured that the number of activities pulled does not exceed this limit.
+
 ## How the project works
 
+- 'get_data.py' contains all the functions used for pulling data from Strava's API, storing jsons, mamnipulating and putting the data into pandas dataframes.
+- 'views.py' controls what data is presented into each html web page. At the moment the date range has been hardcoded in here until I work on adding the functionality to the web page.
 
 ## Future Planned features
 

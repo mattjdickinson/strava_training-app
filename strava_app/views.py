@@ -18,7 +18,7 @@ requests_cache.install_cache('strava_cache', backend='sqlite', expire_after=180)
 @app.route("/", methods=["GET", "POST"])
 def home():
 
-    #Default to True. Has set code so that 100 pulls per 15mins API limit won't be breached. Add toggle to website
+    # Default to True. Has set code so that 100 pulls per 15mins API limit won't be breached. Add toggle to website
     if request.method == "POST": # user hit 'Refresh  data' button
         use_stored_data = False
     else:
@@ -36,7 +36,7 @@ def home():
     total_activities  = total_activities = athlete_stats['all_ride_totals']['count'] + athlete_stats['all_run_totals']['count'] + athlete_stats['all_swim_totals']['count']
     activity_ids = get_activity_ids(access_token, total_activities, use_stored_data)
 
-    #Need to run to get live data for past 100 so have them stored for demo, set below True to False, and date range to start 1/9/2020
+    # Need to run to get live data for past 100 so have them stored for demo, set below True to False, and date range to start 1/9/2020
     start_date =  datetime(2020, 10, 1).date()
     end_date = datetime(2020, 12, 31).date()
 
@@ -59,8 +59,6 @@ def home():
                     'Average Cadence (spm)',
                     'Effort (1-10)', 
                     'Notes']
-
-
 
     return render_template("home.html", column_names=column_names, activity_data=activity_data, weekly_totals=weekly)
 
@@ -108,8 +106,6 @@ def monthly():
     else:
         access_token = get_access_token()
         athlete_id = get_athlete(access_token)['id']
-
-
 
     athlete_stats = get_athlete_stats(access_token, athlete_id, use_stored_data)
     total_activities  = total_activities = athlete_stats['all_ride_totals']['count'] + athlete_stats['all_run_totals']['count'] + athlete_stats['all_swim_totals']['count']

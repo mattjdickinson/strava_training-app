@@ -39,8 +39,6 @@ def workout_type(i):
     return type[i]
 
 def am_or_pm(i):
-    # txt = i.split(':')
-    # tm = time(txt[0], txt[1], txt[2])
     if i < time(12,00,00,00):
         x = 'AM'
     else:
@@ -55,12 +53,11 @@ async def get(url):
         async with session.get(url) as response:
             return await response.json()
 
-
+# TODO
 def authroise_user(): 
     auth_url = "https://www.strava.com/oauth/authorize"
     redirect_uri = "http://localhost:8080/authorized"
     return 0
-
 
 
 def get_access_token():
