@@ -3,53 +3,138 @@
 Home
 {% endblock %}
 {% block content %}
-<p>Training log</p>
+<p class="para">Training log for past 70 activities.</p> 
+<p class="para">Hit 'Refresh data' to load live data. Note this action can only be performed once every 15mins as per Strava's set API limits.</p>
 
+<form class="para" action="/" method="post">
+    <button class="btn btn-primary" type="submit">Refresh data</button>
+</form>
 
 <div class="table-container">
     <table class="table table-hover .table-responsive .table-sm w-auto small">
-    <!-- <table> -->
-
+        <thead>
         <tr class = "header">
             {% for col in column_names %}
             <th>{{ col }}</th>
             {% endfor %}
         </tr>
+        </thead>
 
-        {% for row in activity_data %}
+        <tbody>
+        {% for row in range(activity_data|length) %}
 
+            {% if row == 0 %}
+                {% set week_flag = activity_data['grp_idx'][0] %}
 
-        {% if row['workout_type'] == "Workout" %}
-            <tr class="table-warning">
-        {% elif row['workout_type'] == "Long Run" %}        
-            <tr class="table-primary">
-        {% elif row['workout_type'] == "Race" %}        
-            <tr class="table-success">
-        {% else %}
-            <tr>
-        {% endif %}
-            
-            <td>{{ row['date'] }}</td>
-            <td>{{ row['time'] }}</td>
-            <td>{{ row['name'] }}</td>
-            <td>{{ row['distance'] }}</td>
-            <td>{{ row['moving_time'] }}</td>
-            <td>{{ row['workout_type'] }}</td>
-            <td>{{ row['average_speed'] }}</td>
-            <td>{{ "laps" }}</td>
-            <td>{{ row['average_heartrate'] }}</td>
-            <td>{{ row['average_cadence'] }}</td>
-            <td>{{ row['perceived_exertion'] }}</td>
-            <td>{{ row['description'] }}</td>
-        </tr>
+                <tr class="table-info" style="outline: thin solid"> 
+                    <td>{{ "Total for week commencing: " + weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'wc'].iloc[0]|string  }}</td>
+                    <td></td>
+                    <td></td> 
+                    <td></td> 
+                    <td>{{ weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'distance'].iloc[0]|string + ' mi'}}</td> 
+                    <td>{{ weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'time'].iloc[0] }}</td> 
+                    <td></td> 
+                    <td></td> 
+                    <td></td> 
+                    <td></td>
+                    <td></td> 
+                    <td></td>
+                    <td></td> 
+                </tr>
 
+                {% if activity_data['workout_type'][row] == "Workout" %}
+                    <tr class="table-warning">
+                {% elif activity_data['workout_type'][row] == "Long Run" %}        
+                    <tr class="table-primary">
+                {% elif activity_data['workout_type'][row] == "Race" %}        
+                    <tr class="table-success">
+                {% else %}
+                    <tr>
+                {% endif %}
+                    
+                        <td>{{ activity_data['date'][row] }}</td>
+                        <td>{{ activity_data['date'][row].strftime('%a') }}</td>
+                        <td>{{ activity_data['time'][row] }}</td>
+                        <td>{{ activity_data['name'][row] }}</td>
+                        <td>{{ '{:.2f}'.format(activity_data['distance'][row]) + ' mi' }}</td>
+                        <td>{{ activity_data['moving_time'][row] }}</td>
+                        <td>{{ activity_data['workout_type'][row] }}</td>
+                        <td>{{ activity_data['average_speed'][row] }}</td>     
+                        <!-- use pre tag below to allow for white space and put laps on new lines -->
+                        <td><pre>{{ activity_data['laps'][row]  }}</pre></td>   
+                        <td>{{ activity_data['average_heartrate'][row] }}</td>
+                        <td>{{ activity_data['average_cadence'][row] }}</td>
+                        <td>{{ activity_data['perceived_exertion'][row] }}</td>
+                        <td>{{ activity_data['description'][row] }}</td>
+                    </tr> 
 
+            {% else %}
+                {% if activity_data['grp_idx'][row] != activity_data['grp_idx'][row - 1] %}
+                    {% set empty_row_flag = True %}
+                {% else %}
+                    {% set empty_row_flag = False %}
+                {% endif %}
+
+                {% if empty_row_flag == True %}
+                    <tr>
+                        <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>    
+                    </tr>
+                    {% set empty_row_flag = False %}
+                {% else %}
+                {% endif %}
+
+                {% set week_flag = activity_data['grp_idx'][row] %}
+                
+                {% if activity_data['grp_idx'][row] != activity_data['grp_idx'][row -1] %}
+
+                    <tr class="table-info" style="outline: thin solid"> 
+                        <td>{{ "Weekly total for week commencing: " + weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'wc'].iloc[0]|string }}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td> 
+                        <td>{{ weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'distance'].iloc[0]|string + ' mi'}}</td> 
+                        <td>{{ weekly_totals.loc[weekly_totals['grp_idx'] == week_flag, 'time'].iloc[0] }}</td> 
+                        <td></td> 
+                        <td></td> 
+                        <td></td> 
+                        <td></td>
+                        <td></td> 
+                        <td></td>
+                        <td></td> 
+                    </tr>
+                {% else %}
+                
+                {% endif %}
+
+                {% if activity_data['workout_type'][row] == "Workout" %}
+                    <tr class="table-warning">
+                {% elif activity_data['workout_type'][row] == "Long Run" %}        
+                    <tr class="table-primary">
+                {% elif activity_data['workout_type'][row] == "Race" %}        
+                    <tr class="table-success">
+                {% else %}
+                    <tr>
+                {% endif %}
+                    
+                        <td>{{ activity_data['date'][row] }}</td>
+                        <td>{{ activity_data['date'][row].strftime('%a') }}</td>
+                        <td>{{ activity_data['time'][row] }}</td>
+                        <td>{{ activity_data['name'][row] }}</td>
+                        <td>{{ '{:.2f}'.format(activity_data['distance'][row]) + ' mi' }}</td>
+                        <td>{{ activity_data['moving_time'][row] }}</td>
+                        <td>{{ activity_data['workout_type'][row] }}</td>
+                        <td>{{ activity_data['average_speed'][row] }}</td>     
+                        <!-- use pre tag below to allow for white space and put laps on new lines -->
+                        <td><pre>{{ activity_data['laps'][row] }}</pre></td>   
+                        <td>{{ activity_data['average_heartrate'][row] }}</td>
+                        <td>{{ activity_data['average_cadence'][row] }}</td>
+                        <td>{{ activity_data['perceived_exertion'][row] }}</td>
+                        <td>{{ activity_data['description'][row] }}</td>
+                    </tr> 
+            {% endif %}
         {% endfor %}
-
+    </tbody>
     </table>
 </div>
-
-
-
 
 {% endblock %}

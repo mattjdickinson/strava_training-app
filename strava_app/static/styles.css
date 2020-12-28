@@ -22,7 +22,7 @@
 }
 
 .navbar-item {
-    font-variant: small-caps;
+    /* font-variant: small-caps; */
     margin-left: 30px;
 }
 
@@ -36,6 +36,11 @@ table {
     border-collapse: collapse;
     width: 100%;
     border-left: 1000px !important;
+    text-align: left;
+    position: relative;
+    display: block;
+    height: 650px;
+    overflow-y: scroll;
 }
 
 td, th {
@@ -44,17 +49,30 @@ td, th {
     padding: 8px;
 }
 
-/* tr:nth-child(even) {
-    background-color: #dddddd;
-} */
-
 .header {
     background-color: #dddddd;
+    /* outline: thin solid; */
+}
+
+.para {
+    padding-left: 100px;
+}
+
+.foot {
+    padding-right: 100px;
+    text-align: right;
 }
 
 .table-container {
     padding-top: 20px;
     padding-bottom: 20px;
-    padding-left: 150px;
-    padding-right: 150px;
+    padding-left: 100px;
+    padding-right: 100px;
 }
+  
+  th {
+    background: #dddddd;
+    /* outline: thin solid; */
+    position: sticky;
+    top: 0;
+  }

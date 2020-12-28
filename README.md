@@ -1,31 +1,47 @@
-Put json into pandas df?
-Put json into sqllite database so can query tables, present data, add description column that user can amend i.e. splits?
-Both would allow filtering to be done easier
+# Strava Training Log
+
+## Project overview
+This is a web app using Strava's API. My latest runs are pulled from Strava and presented in a traditional training log for running.  
+
+![Training](Screenshots/Screenshot 2020-12-28 at 12.34.20.png?raw=true) 
 
 
-WHat do I want my table to show?
-Name, start_date, distance, time, avg pace, lap splits (lap_id,time, distance, avg pace), avg lap split (useful for workouts 400m reps etc), suffer_score, AVG HR (if has_Hr = true), 
-Lap splits will have to be some form of embedded list / tuple within the one item
-Lap splits might be separate GET reuqest, using our activities
-Allow user to specify date range
-By default just do past year (or even past week) so that it runs quickly initially. This means we can keep initial GETs to one or two pages
 
-TODO
-Get basic table working for one activities
-Extend table for all activities - loop alreayd in place for json, but will need to amend if use df
-Add in week/month/year subtotals - split by activity type (run, ride) and don't show if not present i.e. if toggles
-Add in date range to present results
-Add in user filter i.e. run / workout type - or just fovcus on running for now
-Export to Excel & google sheets
-Add visual page 'downloading activity number x' when loading df and splits, since could take long time depending on number of activities
-Style web page
+## How to run
+- Set up your environment and activate: 
 
-Desirable
-Add in week start (Mon / Sun)
-Add in user description to activity - no as we won't be storing user data
-Use past data to predict future performance? Could do something simple based on past race performance, and Jack Daniels formula
-Link to show map of activity (individual GET request, polyline graph)
-Map heatspot based on speed
-DATE range specified in web browser to print from. default could be one year. Would need to amend functions
+    `source env/bin/activate`
+
+- Install the required packages using the command:
+
+    `pip install -r requirements.txt`
+
+- Make sure to change directory appropriately:
+
+    `cd /Users/matt/Python/strava-training`
+
+- Run the project using the command:
+
+    `FLASK_APP=strava_app.webapp FLASK_ENV=development flask run --port 8080`
+
+## How the project works
+
+## Limitations
+
+## Future Planned features
+
+- Add time as secondary axis to weekly and monthly charts
+- Add monthly totals to activity breakdown table
+- Add in OAuth so user users can use the app
+- Add database with user login and password so to store data.
+- Add in mechanism to pull all activities into databse overtime to get around API limits.
+- Refresh data to check if activity data exists in database and to only pull new data, thus limiting API calls.
+- Add date ranges throughout for user input
+- Allow user to export data to Excel / Google Sheets
+- Better stlying on the web page
+- Add visual page 'downloading activity number x out of y' 
+- Use past data to predict future performance? Could do something simple based on past race performance, and Jack Daniels formula
+- Link to show map of activity (individual GET request, polyline graph)
+- Map heatspot based on speed
 
 
