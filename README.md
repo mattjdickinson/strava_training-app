@@ -5,19 +5,17 @@ This is a web app using Strava's API. My latest runs are pulled from Strava and 
 
 From:
 
-<img src="https://github.com/mattjdickinson/strava-training/blob/master/Screenshots/Screenshot%202020-12-28%20at%2012.55.23.png" width="200">
-
-![Strava](https://github.com/mattjdickinson/strava-training/blob/master/Screenshots/Screenshot%202020-12-28%20at%2012.55.23.png?raw=true =100x20) 
+<img src="https://github.com/mattjdickinson/strava-training/blob/master/Screenshots/Screenshot%202020-12-28%20at%2012.55.23.png" width="400">
 
 To:
 
-![Training](https://github.com/mattjdickinson/strava-training/blob/master/Screenshots/Screenshot%202020-12-28%20at%2012.34.20.png?raw=true =100x20) 
+<img src="https://github.com/mattjdickinson/strava-training/blob/master/Screenshots/Screenshot%202020-12-28%20at%2012.34.20.png" width="400">
 
 The app includes mileage totals by weeky and monthly:
 
-![Weekly](https://github.com/mattjdickinson/strava-training/blob/master/Screenshots/Screenshot%202020-12-28%20at%2012.51.07.png?raw=true =100x20) 
+<img src="https://github.com/mattjdickinson/strava-training/blob/master/Screenshots/Screenshot%202020-12-28%20at%2012.51.07.png" width="400">
 
-![Monthly](https://github.com/mattjdickinson/strava-training/blob/master/Screenshots/Screenshot%202020-12-28%20at%2012.51.22.png?raw=true =100x20) 
+<img src="https://github.com/mattjdickinson/strava-training/blob/master/Screenshots/Screenshot%202020-12-28%20at%2012.51.22.png" width="400">
 
 ## How to run
 - Set up your environment and activate: 
